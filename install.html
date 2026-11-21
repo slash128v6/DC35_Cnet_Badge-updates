@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flash a Badge</title>
+<meta name="description" content="Install DC35 radar badge firmware 1.0.32 from Chrome or Edge over USB, after checking its signature.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<!--
+  ESP Web Tools (Nabu Casa, Apache-2.0) does the flashing, over the browser's
+  Web Serial API. Pinned to an exact version. It is handed a manifest built on
+  this page from files the page has ALREADY checked, as blob: URLs, so what it
+  writes is byte-for-byte what was verified - it never fetches anything itself.
+-->
+<script type="module" src="https://cdn.jsdelivr.net/npm/esp-web-tools@10.4.0/dist/web/install-button.js"></script>
+<style>
+  :root {
+    --ground: #eef2f1;
+    --surface: #ffffff;
+    --ink: #14232a;
+    --muted: #56676d;
+    --rule: #cad6d4;
+    --accent: #b26f00;
+    --accent-ink: #ffffff;
+    --link: #1d6b73;
+    --ok: #17864a;
+    --bad: #c0392b;
+    --wait: #8a979b;
+    --shadow: 0 1px 2px rgba(20, 35, 42, .06), 0 6px 18px rgba(20, 35, 42, .06);
+    --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f1a1e;
+      --surface: #16252a;
+      --ink: #e3ecea;
+      --muted: #93a6a9;
+      --rule: #2a3d42;
+      --accent: #e5a53a;
+      --accent-ink: #1a1204;
+      --link: #5fb7bd;
+      --ok: #4cc47f;
+      --bad: #ef7a6b;
+      --wait: #6f8286;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f1a1e;
+    --surface: #16252a;
+    --ink: #e3ecea;
+    --muted: #93a6a9;
+    --rule: #2a3d42;
+    --accent: #e5a53a;
+    --accent-ink: #1a1204;
+    --link: #5fb7bd;
+    --ok: #4cc47f;
+    --bad: #ef7a6b;
+    --wait: #6f8286;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 17px/1.6 var(--body); }
+  .page { max-width: 46rem; margin: 0 auto; padding: 3rem 1.25rem 4rem; display: grid; gap: 2.6rem; }
+  h1, h2, h3, p, ol, ul { margin: 0; }
+  a { color: var(--link); }
+  a:focus-visible, button:focus-visible { outline: 2px solid var(--link); outline-offset: 3px; border-radius: 4px; }
+  code, .mono { font-family: var(--mono); font-size: .88em; }
+
+  header { display: grid; gap: .9rem; }
+  .eyebrow { font: 500 .72rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow a { color: inherit; text-decoration: none; }
+  .eyebrow a:hover { text-decoration: underline; }
+  h1 { font: 800 clamp(2.6rem, 8vw, 4.2rem)/.92 var(--display); letter-spacing: .01em; text-transform: uppercase; text-wrap: balance; }
+  .lede { font-size: 1.12rem; line-height: 1.5; max-width: 44ch; }
+  h2 { font: 700 1.45rem/1 var(--display); text-transform: uppercase; letter-spacing: .02em; }
+  h3 { font-size: 1rem; }
+  section { display: grid; gap: 1rem; }
+  .prose { display: grid; gap: .75rem; max-width: 62ch; }
+  .muted { color: var(--muted); }
+
+  /* The one object on the page that is lifted: where the work happens. */
+  .panel { background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); padding: 1.3rem 1.3rem 1.4rem; display: grid; gap: 1.1rem; border-top: 4px solid var(--accent); }
+  .checks { list-style: none; padding: 0; display: grid; gap: .55rem; }
+  .checks li { display: grid; grid-template-columns: 1.4rem 1fr; gap: .1rem .6rem; align-items: baseline; }
+  .checks .mark { font: 700 1rem/1 var(--mono); text-align: center; color: var(--wait); }
+  .checks li[data-s="ok"] .mark { color: var(--ok); }
+  .checks li[data-s="bad"] .mark { color: var(--bad); }
+  .checks .what { font-weight: 700; }
+  .checks .detail { grid-column: 2; color: var(--muted); font-size: .9rem; overflow-wrap: anywhere; }
+  .checks li[data-s="bad"] .detail { color: var(--bad); }
+
+  .go { appearance: none; border: 0; border-radius: 6px; background: var(--accent); color: var(--accent-ink); font: 700 1.05rem/1 var(--body); padding: .95rem 1.4rem; cursor: pointer; justify-self: start; }
+  .go:hover { filter: brightness(1.06); }
+  .go[disabled] { background: var(--rule); color: var(--muted); cursor: not-allowed; filter: none; }
+  .blocked { color: var(--bad); font-weight: 700; }
+
+  ol.steps { padding-left: 1.3rem; display: grid; gap: .7rem; }
+  ol.steps li::marker { font-family: var(--mono); color: var(--accent); }
+  ul.plain { padding-left: 1.1rem; display: grid; gap: .5rem; }
+
+  .os { display: grid; gap: .9rem; }
+  .os > div { display: grid; gap: .35rem; padding-left: .9rem; border-left: 2px solid var(--rule); }
+
+  .tablewrap { overflow-x: auto; }
+  table { border-collapse: collapse; font-size: .92rem; min-width: 26rem; }
+  th, td { text-align: left; padding: .45rem .9rem .45rem 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font: 500 .72rem/1.2 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  td.num { font-family: var(--mono); font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  footer { font: .78rem/1.6 var(--mono); color: var(--muted); border-top: 1px solid var(--rule); padding-top: 1.1rem; }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="eyebrow"><a href="./">DC35 Radar Badge</a> · firmware 1.0.32</div>
+    <h1>Flash from your browser</h1>
+    <p class="lede">Install the badge's firmware over a USB cable, straight from Chrome or Edge. Nothing to download, and the release is checked before a byte is written.</p>
+  </header>
+
+  <section aria-labelledby="before">
+    <h2 id="before">Before you start</h2>
+    <ul class="plain">
+      <li><strong>Chrome or Edge, on a computer.</strong> Firefox and Safari can't talk to USB serial ports, and neither can phones. No Chrome or Edge? <a href="https://github.com/slash128v6/DC35_Cnet_Badge-updates/blob/main/flash/README.md">Flash by cable</a> instead.</li>
+      <li><strong>A USB cable that carries data.</strong> Many charging cables only carry power, and the badge then never shows up.</li>
+      <li><strong>Plug the badge in and switch it on.</strong> Close anything else that might be using it, such as the Arduino IDE's serial monitor.</li>
+    </ul>
+  </section>
+
+  <section aria-labelledby="flash">
+    <h2 id="flash">Check, then install</h2>
+    <div class="panel">
+      <ul class="checks" id="checks" aria-live="polite">
+        <li id="c-browser" data-s="wait"><span class="mark" aria-hidden="true">·</span><span class="what">Browser can reach USB</span><span class="detail">checking…</span></li>
+        <li id="c-sig" data-s="wait"><span class="mark" aria-hidden="true">·</span><span class="what">Release is signed</span><span class="detail">checking…</span></li>
+        <li id="c-image" data-s="wait"><span class="mark" aria-hidden="true">·</span><span class="what">Firmware matches the signed release</span><span class="detail">checking…</span></li>
+        <li id="c-boot" data-s="wait"><span class="mark" aria-hidden="true">·</span><span class="what">Bootloader and partition table</span><span class="detail">checking…</span></li>
+      </ul>
+      <div id="action">
+        <button class="go" disabled>Checking the release…</button>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="steps">
+    <h2 id="steps">What happens when you click</h2>
+    <ol class="steps">
+      <li><strong>Pick the badge from the list.</strong> The browser asks which device to use. The badge shows up as <span class="mono">CP2102 USB to UART Bridge Controller</span> or similar, with its COM port on Windows. Choose it and click <strong>Connect</strong>. Nothing listed? See <a href="#driver">No badge in the list</a>.</li>
+      <li><strong>Choose Install DC35 Radar Badge.</strong></li>
+      <li><strong>Leave “Erase device” unticked</strong> to keep the badge's name, Wi-Fi details, settings, best scores and CTF progress. Tick it only to wipe the badge completely, before passing it on.</li>
+      <li><strong>Click Next, then Install,</strong> and wait about a minute. Don't unplug it while the bar is moving.</li>
+      <li><strong>Close the dialog.</strong> The badge restarts into the new firmware; the version shows at the top of <strong>Settings</strong>.</li>
+    </ol>
+    <p class="muted">If it says it can't connect, hold the badge's <strong>BOOT</strong> button down while it tries, then let go once it starts writing. A different cable or USB port fixes most of the rest.</p>
+  </section>
+
+  <section aria-labelledby="driver" id="driver-section">
+    <h2 id="driver">No badge in the list</h2>
+    <div class="prose">
+      <p>The badge's ESP32 board talks to the computer through a USB-to-serial chip, and the computer needs that chip's driver. The badges use a <strong>Silicon Labs CP210x</strong> chip; some other ESP32 boards use a <strong>WCH CH340</strong> instead. Check the cable first, then:</p>
+    </div>
+    <div class="os">
+      <div>
+        <h3>Windows</h3>
+        <p>Open <strong>Device Manager</strong> with the badge plugged in. Under <strong>Ports (COM &amp; LPT)</strong> it should appear as <span class="mono">Silicon Labs CP210x USB to UART Bridge (COM…)</span>. If it isn't there, or appears under <strong>Other devices</strong> with a yellow warning sign, install the driver:</p>
+        <ul class="plain">
+          <li>CP210x: the <strong>CP210x Universal Windows Driver</strong> from <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers">Silicon Labs</a>. Unzip it, right-click <span class="mono">silabser.inf</span> and choose <strong>Install</strong>.</li>
+          <li>CH340: <span class="mono">CH341SER.EXE</span> from <a href="https://www.wch-ic.com/downloads/CH341SER_EXE.html">WCH</a>, then <strong>Install</strong>.</li>
+        </ul>
+        <p>Unplug the badge, plug it back in, and reload this page.</p>
+      </div>
+      <div>
+        <h3>macOS</h3>
+        <p>Recent macOS usually needs nothing. If the badge doesn't appear, install the macOS driver from the same <a href="https://www.silabs.com/developers/usb-to-uart-bridge-vcp-drivers">Silicon Labs page</a>, then allow it in <strong>System Settings → Privacy &amp; Security</strong> when asked, and plug the badge in again.</p>
+      </div>
+      <div>
+        <h3>Linux</h3>
+        <p>The driver is built in. If the badge is listed but won't connect, your user probably isn't allowed to open serial ports: add yourself to the <span class="mono">dialout</span> group (<span class="mono">uucp</span> on Arch), then log out and back in.</p>
+      </div>
+    </div>
+  </section>
+
+  <section aria-labelledby="what">
+    <h2 id="what">What is checked, and what is written</h2>
+    <div class="prose">
+      <p>The page reads the release published beside it and checks the <strong>signature</strong> on its manifest against the public keys built into every badge. It then checks the firmware's size and SHA-256 against the signed manifest. A badge updating over Wi-Fi makes exactly these checks, so a release it would refuse is refused here too.</p>
+      <p>The bootloader, partition table and OTA selector come from the same release build but aren't covered by the signature. They're what any ESP32 Arduino build of this badge writes, and the badge never updates them over Wi-Fi.</p>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Address</th><th>File</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="num">0x1000</td><td class="mono">flash/bootloader.bin</td><td>starts the chip</td></tr>
+          <tr><td class="num">0x8000</td><td class="mono">flash/partitions.bin</td><td>lays out the flash: two firmware slots, settings</td></tr>
+          <tr><td class="num">0xE000</td><td class="mono">flash/boot_app0.bin</td><td>points the badge at the slot being written; without it, a badge that has updated over Wi-Fi keeps booting the old one</td></tr>
+          <tr><td class="num">0x10000</td><td class="mono" id="t-app">cnet-badge-1.0.32.bin</td><td>the firmware</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="muted">Settings live at 0x9000 and are left alone unless you tick “Erase device”.</p>
+  </section>
+
+  <footer>
+    Published with firmware 1.0.32 and rebuilt with every release. Flashing by <a href="https://github.com/esphome/esp-web-tools">ESP Web Tools</a>. Prefer a command line? <a href="https://github.com/slash128v6/DC35_Cnet_Badge-updates/blob/main/flash/README.md">Flash by cable</a>.
+  </footer>
+
+</main>
+
+<script>
+(() => {
+  // Filled in when the site is published: the labels of the files in flash/keys/.
+  const KEYS = ["owner", "recovery"];
+  const PAGE_VERSION = "1.0.32";
+
+  const $ = (id) => document.getElementById(id);
+  function mark(id, state, detail) {
+    const li = $(id);
+    li.dataset.s = state;
+    li.querySelector(".mark").textContent = state === "ok" ? "✓" : state === "bad" ? "✕" : "·";
+    li.querySelector(".detail").textContent = detail;
+  }
+  function action(html) { $("action").innerHTML = html; }
+
+  async function get(path, kind) {
+    const r = await fetch(path, { cache: "no-store" });
+    if (!r.ok) throw new Error(path + ": HTTP " + r.status);
+    return kind === "text" ? r.text() : r.arrayBuffer();
+  }
+  function pemToDer(pem) {
+    const b64 = pem.replace(/-----[^-]+-----/g, "").replace(/\s+/g, "");
+    return Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+  }
+  // openssl writes ECDSA signatures as DER; WebCrypto wants r||s, 32 bytes each.
+  function derToRaw(der) {
+    const b = new Uint8Array(der);
+    if (b[0] !== 0x30 || b[1] !== b.length - 2) throw new Error("not a DER signature");
+    let i = 2;
+    const out = new Uint8Array(64);
+    for (let k = 0; k < 2; k++) {
+      if (b[i] !== 0x02) throw new Error("not a DER signature");
+      let len = b[i + 1], v = b.subarray(i + 2, i + 2 + len);
+      while (v.length > 32 && v[0] === 0) v = v.subarray(1);
+      if (v.length > 32) throw new Error("integer too long");
+      out.set(v, k * 32 + (32 - v.length));
+      i += 2 + len;
+    }
+    if (i !== b.length) throw new Error("trailing bytes in signature");
+    return out;
+  }
+  const hex = (buf) => Array.from(new Uint8Array(buf), (x) => x.toString(16).padStart(2, "0")).join("");
+  const blobUrl = (buf) => URL.createObjectURL(new Blob([buf], { type: "application/octet-stream" }));
+
+  const canSerial = "serial" in navigator && window.isSecureContext;
+  mark("c-browser", canSerial ? "ok" : "bad", canSerial
+    ? "Web Serial is available."
+    : "This browser can't open USB serial ports. Use Chrome or Edge on a computer, or flash by cable.");
+
+  (async () => {
+    // 1. the signature
+    let manifest, manifestBytes;
+    try {
+      const [mb, sig] = await Promise.all([get("manifest.json"), get("manifest.json.sig")]);
+      manifestBytes = mb;
+      const raw = derToRaw(sig);
+      let signer = null;
+      for (const label of KEYS) {
+        const der = pemToDer(await get("flash/keys/" + label + ".pem", "text"));
+        const key = await crypto.subtle.importKey("spki", der, { name: "ECDSA", namedCurve: "P-256" }, false, ["verify"]);
+        if (await crypto.subtle.verify({ name: "ECDSA", hash: "SHA-256" }, key, raw, mb)) { signer = label; break; }
+      }
+      if (!signer) throw new Error("the signature matches none of the badge's keys (" + KEYS.join(", ") +
+        "). Just after a release the two files can briefly be out of step: wait ten minutes and reload.");
+      manifest = JSON.parse(new TextDecoder().decode(mb));
+      mark("c-sig", "ok", "Firmware " + manifest.version + ", signed with the '" + signer + "' key.");
+    } catch (e) {
+      mark("c-sig", "bad", e.message);
+      ["c-image", "c-boot"].forEach((id) => mark(id, "wait", "not checked"));
+      action('<p class="blocked">Not installing: the release could not be verified.</p>');
+      return;
+    }
+
+    // 2. the firmware image, against the signed hash and size
+    let app;
+    try {
+      const b = manifest.builds && manifest.builds.badge;
+      if (!b) throw new Error("the manifest has no badge build");
+      const name = b.url.split("/").pop();
+      $("t-app").textContent = name;
+      app = await get(name);
+      if (app.byteLength !== b.size) throw new Error(name + " is " + app.byteLength + " bytes; the signed manifest says " + b.size + ".");
+      const got = hex(await crypto.subtle.digest("SHA-256", app));
+      if (got !== b.sha256.toLowerCase()) throw new Error(name + " does not match the signed SHA-256.");
+      mark("c-image", "ok", name + ", " + app.byteLength.toLocaleString() + " bytes, SHA-256 matches.");
+    } catch (e) {
+      mark("c-image", "bad", e.message);
+      mark("c-boot", "wait", "not checked");
+      action('<p class="blocked">Not installing: the firmware does not match its signed release.</p>');
+      return;
+    }
+
+    // 3. the rest of what gets written
+    let boot, parts, otaSel;
+    try {
+      [boot, parts, otaSel] = await Promise.all(
+        ["flash/bootloader.bin", "flash/partitions.bin", "flash/boot_app0.bin"].map((p) => get(p)));
+      mark("c-boot", "ok", "Bootloader, partition table and OTA selector present.");
+    } catch (e) {
+      mark("c-boot", "bad", e.message);
+      action('<p class="blocked">Not installing: part of the release is missing.</p>');
+      return;
+    }
+
+    if (manifest.version !== PAGE_VERSION) {
+      // A cached page from the previous release, over the new files, or the
+      // reverse. The files are what was verified, so say which is which.
+      mark("c-sig", "ok", "Firmware " + manifest.version + " (this page was published with " +
+        PAGE_VERSION + "; it may be cached). The firmware checks are what count.");
+    }
+    if (!canSerial) {
+      action('<button class="go" disabled>Install needs Chrome or Edge</button>');
+      return;
+    }
+
+    const ewt = {
+      name: "DC35 Radar Badge",
+      version: manifest.version,
+      new_install_prompt_erase: true,      // ask; the box starts unticked
+      new_install_improv_wait_time: 0,     // the badge does not speak Improv
+      builds: [{
+        chipFamily: "ESP32",
+        parts: [
+          { path: blobUrl(boot), offset: 0x1000 },
+          { path: blobUrl(parts), offset: 0x8000 },
+          { path: blobUrl(otaSel), offset: 0xe000 },
+          { path: blobUrl(app), offset: 0x10000 },
+        ],
+      }],
+    };
+    const m = URL.createObjectURL(new Blob([JSON.stringify(ewt)], { type: "application/json" }));
+    action('<esp-web-install-button id="ewt">' +
+      '<button slot="activate" class="go">Connect and install ' + manifest.version + '</button>' +
+      '<span slot="unsupported" class="blocked">This browser can\'t reach USB serial ports. Use Chrome or Edge.</span>' +
+      '<span slot="not-allowed" class="blocked">Web Serial needs this page over HTTPS.</span>' +
+      '</esp-web-install-button>');
+    $("ewt").setAttribute("manifest", m);
+  })();
+})();
+</script>
+</body>
+</html>
