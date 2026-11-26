@@ -1,0 +1,532 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sneak Rulebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #eef2f1;
+    --surface: #ffffff;
+    --ink: #14232a;
+    --muted: #56676d;
+    --rule: #cad6d4;
+    --accent: #1d6b73;
+    --go: #17864a;
+    --stop: #c9342a;
+    --warn: #b26f00;
+    --chip-go: #dcf1e4;
+    --chip-stop: #f8e0dd;
+    --chip-warn: #f6ead3;
+    --chip-idle: #e3e9e8;
+    --shadow: 0 1px 2px rgba(20, 35, 42, .06), 0 6px 18px rgba(20, 35, 42, .06);
+
+    --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f1a1e;
+      --surface: #16252a;
+      --ink: #e3ecea;
+      --muted: #93a6a9;
+      --rule: #2a3d42;
+      --accent: #5fb7bd;
+      --go: #4cc47f;
+      --stop: #f07163;
+      --warn: #e5a53a;
+      --chip-go: #173627;
+      --chip-stop: #3d2020;
+      --chip-warn: #3a2d15;
+      --chip-idle: #22343a;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f1a1e;
+    --surface: #16252a;
+    --ink: #e3ecea;
+    --muted: #93a6a9;
+    --rule: #2a3d42;
+    --accent: #5fb7bd;
+    --go: #4cc47f;
+    --stop: #f07163;
+    --warn: #e5a53a;
+    --chip-go: #173627;
+    --chip-stop: #3d2020;
+    --chip-warn: #3a2d15;
+    --chip-idle: #22343a;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 17px/1.6 var(--body);
+  }
+  .page {
+    max-width: 58rem;
+    margin: 0 auto;
+    padding: 3.5rem 1.25rem 5rem;
+    display: grid;
+    gap: 3.5rem;
+  }
+  .prose { max-width: 66ch; }
+  .prose > * + * { margin-top: .9rem; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  p, ul, ol, table { margin: 0; }
+
+  .eyebrow {
+    font: 500 .72rem/1 var(--mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font: 800 clamp(3.4rem, 9vw, 5.6rem)/.9 var(--display);
+    letter-spacing: .01em;
+    text-transform: uppercase;
+  }
+  h2 {
+    font: 700 2.1rem/1 var(--display);
+    text-transform: uppercase;
+    letter-spacing: .02em;
+  }
+  h3 { font: 700 1.05rem/1.3 var(--body); }
+  code, .mono { font-family: var(--mono); font-size: .88em; }
+  strong { font-weight: 700; }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header.masthead { display: grid; gap: 1.1rem; }
+  .lede { font-size: 1.28rem; line-height: 1.45; max-width: 36ch; text-wrap: balance; }
+  .status {
+    display: flex; flex-wrap: wrap; gap: .5rem 1.25rem;
+    font: .8rem/1.4 var(--mono); color: var(--muted);
+    padding-top: .25rem;
+  }
+  .status span b { color: var(--ink); font-weight: 500; }
+
+  section { display: grid; gap: 1.4rem; }
+  .section-head { display: grid; gap: .5rem; }
+
+  /* ---- setup steps ---- */
+  ol.steps { padding: 0; list-style: none; counter-reset: s; display: grid; gap: .9rem; }
+  ol.steps li { counter-increment: s; display: grid; grid-template-columns: 2rem 1fr; gap: .75rem; }
+  ol.steps li::before {
+    content: counter(s);
+    font: 800 1.5rem/1.1 var(--display); color: var(--accent);
+  }
+  ol.steps li p { color: var(--muted); font-size: .95rem; }
+
+  /* ---- round timeline ---- */
+  .timeline-wrap { overflow-x: auto; }
+  .timeline {
+    display: grid;
+    grid-template-columns: 2.5fr 4.25fr 1.6fr 3.75fr;
+    gap: 4px;
+    min-width: 40rem;
+  }
+  .phase {
+    padding: .9rem .9rem 1rem;
+    display: grid;
+    align-content: start;
+    gap: .35rem;
+    border-top: 5px solid var(--c);
+    background: var(--surface);
+  }
+  .phase:first-child { border-radius: 6px 0 0 6px; }
+  .phase:last-child { border-radius: 0 6px 6px 0; }
+  .phase .name { font: 800 1.5rem/1 var(--display); letter-spacing: .03em; color: var(--c); }
+  .phase .dur { font: 500 .8rem/1.2 var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+  .phase .what { font-size: .88rem; line-height: 1.45; color: var(--muted); }
+  .p-idle { --c: var(--muted); }
+  .p-green { --c: var(--go); }
+  .p-warn { --c: var(--warn); }
+  .p-red { --c: var(--stop); }
+  .outcomes { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.25rem; }
+  .knows { background: var(--surface); border-radius: 8px; padding: 1.2rem 1.25rem; display: grid; gap: .5rem; align-content: start; }
+  .knows .who { font: 500 .72rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  .knows .who.go { color: var(--go); }
+  .knows .who.stop { color: var(--stop); }
+  .knows p { font-size: .95rem; color: var(--muted); }
+
+  /* ---- screen mocks ---- */
+  .screens {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1.25rem;
+  }
+  figure { margin: 0; display: grid; gap: .6rem; align-content: start; }
+  .bezel {
+    background: #05090a;
+    border-radius: 50%;
+    padding: 10px;
+    box-shadow: var(--shadow);
+    max-width: 18rem;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .bezel svg { display: block; width: 100%; height: auto; border-radius: 50%; }
+  figcaption { font-size: .9rem; line-height: 1.45; color: var(--muted); }
+  figcaption b { color: var(--ink); }
+
+  /* ---- ring legend ---- */
+  .ring-list { list-style: none; padding: 0; display: grid; gap: 0; }
+  .ring-list li {
+    display: grid; grid-template-columns: 2.6rem 8.5rem 1fr; gap: 1rem; align-items: center;
+    padding: .7rem 0; border-top: 1px solid var(--rule);
+  }
+  .ring-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .ring-list .when { font: 500 .8rem/1.3 var(--mono); }
+  .ring-list .desc { font-size: .95rem; color: var(--muted); }
+  .dot {
+    width: 2.1rem; height: 2.1rem; border-radius: 50%;
+    background: var(--s1);
+    box-shadow: inset 0 0 0 5px #05090a, 0 0 0 1px var(--rule);
+  }
+  .r-idle   { --s1: #b4b4b4; animation: breathe 5.6s ease-in-out infinite; }
+  .r-green  { --s1: #1f8a45; background: conic-gradient(#7dffb3 0 15deg, #1f8a45 15deg 360deg); animation: spin 1.44s linear infinite; }
+  .r-turn   { animation: amber .22s steps(1) infinite; }
+  .r-red    { --s1: #dc0000; }
+  .r-caught { background: conic-gradient(#8a0000 0 170deg, #ffffff 170deg 190deg, #8a0000 190deg 360deg); animation: pulse .5s steps(1) infinite; }
+  .r-win    { background: conic-gradient(#ff0040, #ffb000, #40ff40, #00c0ff, #8040ff, #ff0040); animation: spin 2s linear infinite; }
+  @keyframes breathe { 50% { filter: brightness(.55); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes amber { 0% { background: #ff8200; } 50% { background: #140800; } }
+  @keyframes pulse { 50% { filter: brightness(.45); } }
+  @media (max-width: 34rem) {
+    .ring-list li { grid-template-columns: 2.6rem 1fr; }
+    .ring-list .desc { grid-column: 2; }
+  }
+
+  /* ---- controls ---- */
+  dl.spec { display: grid; grid-template-columns: max-content 1fr; gap: .55rem 1.5rem; margin: 0; }
+  dl.spec dt { font: 500 .85rem/1.6 var(--mono); color: var(--ink); white-space: nowrap; }
+  dl.spec dd { margin: 0; color: var(--muted); font-size: .95rem; }
+  @media (max-width: 34rem) {
+    dl.spec { grid-template-columns: 1fr; gap: .1rem; }
+    dl.spec dd { margin-bottom: .6rem; }
+  }
+
+  /* ---- limitations ---- */
+  .gaps { list-style: none; padding: 0; display: grid; gap: .9rem; }
+  .gaps li { display: grid; gap: .2rem; padding-left: 1rem; border-left: 3px solid var(--rule); }
+  .gaps li.serious { border-left-color: var(--warn); }
+  .gaps li p { color: var(--muted); font-size: .95rem; }
+
+  footer { font: .78rem/1.6 var(--mono); color: var(--muted); border-top: 1px solid var(--rule); padding-top: 1.2rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot { animation: none !important; }
+  }
+</style>
+
+<main class="page">
+
+  <header class="masthead">
+    <div class="eyebrow">DC35 mmWave radar badge · game rules</div>
+    <h1>Sneak</h1>
+    <p class="lede">Red Light, Green Light, refereed by a 24&nbsp;GHz radar. One badge, any number of players, and nobody else needs a badge at all.</p>
+    <div class="status">
+      <span>menu <b>Sneak</b></span>
+      <span>radio <b>none</b></span>
+      <span>field <b>6 m, ±60°</b></span>
+      <span>sound <b>optional</b></span>
+      <span>firmware <b>1.0.44</b></span>
+      <span>board <b>rev F</b></span>
+      <span>as of <b>23 Nov 2026</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">The idea</div>
+      <h2>Don't get seen moving</h2>
+    </div>
+    <div class="prose">
+      <p>One badge stands on a table and faces the room. It is the referee. Everyone else starts at the far side and tries to reach it and slap TAG.</p>
+      <p>Most of the time the referee has its back turned, and you can move. Then it warns you, turns round and looks. While it's looking, the radar sees anyone moving, works out where they are, and the ring points straight at them. Get pointed at and you walk back to the start.</p>
+      <p>Sneak needs exactly one badge. If there are two in the room, <strong>Duel</strong> is the other game — see the <a href="duel_rulebook.html">Duel rulebook</a>.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Before the first round</div>
+      <h2>Setting up</h2>
+    </div>
+    <ol class="steps prose">
+      <li><div><h3>Stand the badge upright, facing the players.</h3><p>The radar sees 60° either side of straight ahead, and that wide axis has to stay horizontal — so the badge stands up the way it hangs, not lying flat and not tipped on its side. Nothing in front of it: a laptop screen or a water bottle is a wall to a 24&nbsp;GHz radar.</p></div></li>
+      <li><div><h3>Mark a start line up to 6 m away, inside the wedge.</h3><p>Anyone further than 6 m is ignored, so start there or closer. Players must approach from the front. Someone walking round the side, outside the radar's view, can't be caught, so the house rule is: stay in front of it.</p></div></li>
+      <li><div><h3>Pick <span class="mono">Games → Sneak</span>.</h3><p>The screen says <span class="mono">ready</span> and the ring breathes white.</p></div></li>
+      <li><div><h3>Press SELECT to start the round.</h3><p>Whoever is running the badge presses it, then walks out of the field or stands still behind it.</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">One round</div>
+      <h2>Blind, turn, look, repeat</h2>
+      <p>Widths show typical phase length. Blind and Look are a different random length every time, so nobody can count down to the turn. The badge goes Blind → Turning → Look over and over until somebody tags it.</p>
+    </div>
+
+    <div class="timeline-wrap">
+      <div class="timeline" role="list">
+        <div class="phase p-idle" role="listitem">
+          <div class="name">Ready</div>
+          <div class="dur">until SELECT</div>
+          <div class="what">Everyone behind the start line.</div>
+        </div>
+        <div class="phase p-green" role="listitem">
+          <div class="name">Blind</div>
+          <div class="dur">2.5–6 s</div>
+          <div class="what">The referee has its back turned. Move — as fast as you dare. <em>One high beep.</em></div>
+        </div>
+        <div class="phase p-warn" role="listitem">
+          <div class="name">Turning</div>
+          <div class="dur">0.9 s</div>
+          <div class="what">Fast amber flashing. Stop, now. <em>Two falling notes.</em></div>
+        </div>
+        <div class="phase p-red" role="listitem">
+          <div class="name">Look</div>
+          <div class="dur">2.5–5 s</div>
+          <div class="what">Solid red. Anyone seen moving is caught. <em>Silent: it is listening.</em></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="outcomes">
+      <div class="knows">
+        <div class="who stop">Caught · 3 s</div>
+        <h3>Back to the start line</h3>
+        <p>A low double buzz, the ring pulses red, and a white light points at each player who moved. They walk back to the start. Then the referee goes blind again for everyone, which gives them time to walk back without being caught twice.</p>
+      </div>
+      <div class="knows">
+        <div class="who go">Tagged · 5 s</div>
+        <h3>Someone reached the badge</h3>
+        <p>Slap TAG and the round is yours: a rising fanfare, the ring goes rainbow and the screen says <span class="mono">TAGGED!</span> After 5 s it's back to Ready, and SELECT starts the next round.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">The fine print</div>
+      <h2>What counts as caught</h2>
+    </div>
+    <div class="prose">
+      <p><strong>TAG is the whole front of the badge.</strong> The mantle — the wide top of the squid, above the ring — is a touch pad, marked with a bullseye and the word <span class="mono">TAG</span>, and touching it tags exactly as SELECT does. It is the button to go for at a run: you can hit it with a flat hand without aiming, and without groping round the back for a 6 mm tactile switch. SELECT still works for anyone who prefers it.</p>
+      <p><strong>You get 0.4 seconds to stop.</strong> The first 0.4 s of Look doesn't count, so a player who stopped on the amber warning isn't caught while they settle.</p>
+      <p><strong>A flicker isn't a catch.</strong> The radar has to see you moving for 0.15 seconds before it calls it. It feels speed as well as position, so a brisk step is caught the moment it starts, not once you've arrived.</p>
+      <p><strong>You have about 20 cm of slack.</strong> That is the threshold the badge calls movement: breathing and a little sway sit under it, a step does not. Plant your feet, keep your arms by your sides and let it be the other players who fidget.</p>
+      <p><strong>Freezing mid-step doesn't save you.</strong> Stand perfectly still and the radar loses sight of you, which is the point. But step past the 20 cm and then freeze, and you're caught all the same.</p>
+      <p><strong>You can tag at any moment,</strong> Look included. If you're close enough to slap it, slap it: a tag wins even under a red ring.</p>
+      <p><strong>Three at a time.</strong> The radar tracks up to three people at once. In a bigger group it may only catch three movers in one look, which is luck, not a rule.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">What the screen shows</div>
+      <h2>The referee's view</h2>
+      <p>The screen is round, 240&nbsp;px across, and faces whoever is running the badge — not the players. The radar's fan opens upward from the bottom of the circle: the wedge is its ±60° view, the arcs are 1.5&nbsp;m apart out to 6&nbsp;m, and the ring of dots around the rim mirrors the 24 LEDs on the front, so you can see what the room sees.</p>
+    </div>
+
+    <div class="screens">
+      <figure>
+        <div class="bezel">
+          <svg viewBox="0 0 240 240" role="img" aria-label="Blind phase on the round screen: three players moving in, shown green on the fan">
+            <circle cx="120" cy="120" r="120" fill="#000"/>
+            <g fill="none" stroke="#004000">
+              <path d="M95.8,170 A28,28 0 0 1 144.2,170"/>
+              <path d="M71.5,156 A56,56 0 0 1 168.5,156"/>
+              <path d="M47.3,142 A84,84 0 0 1 192.7,142"/>
+            </g>
+            <g fill="none" stroke="#008000">
+              <path d="M120,184 L23,128 A112,112 0 0 1 217,128 Z"/>
+              <line x1="120" y1="72" x2="120" y2="78"/>
+            </g>
+            <circle cx="120" cy="184" r="2" fill="#008000"/>
+            <g fill="#00e63c"><circle cx="94" cy="128" r="4"/><circle cx="128" cy="140" r="4"/><circle cx="172" cy="118" r="4"/></g>
+            <g fill="#0d3a1c"><circle cx="120.0" cy="6.0" r="3"/><circle cx="149.5" cy="9.9" r="3"/><circle cx="177.0" cy="21.3" r="3"/><circle cx="200.6" cy="39.4" r="3"/><circle cx="218.7" cy="63.0" r="3"/><circle cx="230.1" cy="90.5" r="3"/><circle cx="234.0" cy="120.0" r="3"/><circle cx="230.1" cy="149.5" r="3"/><circle cx="218.7" cy="177.0" r="3"/><circle cx="200.6" cy="200.6" r="3"/><circle cx="177.0" cy="218.7" r="3"/><circle cx="149.5" cy="230.1" r="3"/><circle cx="120.0" cy="234.0" r="3"/><circle cx="90.5" cy="230.1" r="3"/><circle cx="63.0" cy="218.7" r="3"/><circle cx="39.4" cy="200.6" r="3"/><circle cx="21.3" cy="177.0" r="3"/><circle cx="9.9" cy="149.5" r="3"/><circle cx="6.0" cy="120.0" r="3"/><circle cx="9.9" cy="90.5" r="3"/><circle cx="21.3" cy="63.0" r="3"/><circle cx="39.4" cy="39.4" r="3"/><circle cx="63.0" cy="21.3" r="3"/><circle cx="90.5" cy="9.9" r="3"/></g>
+            <circle cx="200.6" cy="39.4" r="3.6" fill="#7dffb3"/>
+            <g font-family="IBM Plex Mono, Consolas, monospace" text-anchor="middle">
+              <text x="120" y="34" font-size="26" font-weight="500" fill="#00e63c">SNEAK</text>
+              <text x="120" y="60" font-size="17" font-weight="500" fill="#00e63c">sneak!</text>
+              <text x="120" y="196" font-size="9.5" fill="#848484">round 3</text>
+              <text x="120" y="208" font-size="9.5" fill="#848484">caught 1</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><b>Blind.</b> Three players closing in, and the rim dots running green with a chaser. The scope shows them moving, but nothing counts yet.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="bezel">
+          <svg viewBox="0 0 240 240" role="img" aria-label="Look phase on the round screen: players frozen, everything red">
+            <circle cx="120" cy="120" r="120" fill="#000"/>
+            <g fill="none" stroke="#004000">
+              <path d="M95.8,170 A28,28 0 0 1 144.2,170"/>
+              <path d="M71.5,156 A56,56 0 0 1 168.5,156"/>
+              <path d="M47.3,142 A84,84 0 0 1 192.7,142"/>
+            </g>
+            <g fill="none" stroke="#008000">
+              <path d="M120,184 L23,128 A112,112 0 0 1 217,128 Z"/>
+              <line x1="120" y1="72" x2="120" y2="78"/>
+            </g>
+            <circle cx="120" cy="184" r="2" fill="#008000"/>
+            <g fill="#ff3b30"><circle cx="97" cy="124" r="4"/><circle cx="128" cy="140" r="4"/><circle cx="168" cy="122" r="4"/></g>
+            <g fill="#dc0000"><circle cx="120.0" cy="6.0" r="3"/><circle cx="149.5" cy="9.9" r="3"/><circle cx="177.0" cy="21.3" r="3"/><circle cx="200.6" cy="39.4" r="3"/><circle cx="218.7" cy="63.0" r="3"/><circle cx="230.1" cy="90.5" r="3"/><circle cx="234.0" cy="120.0" r="3"/><circle cx="230.1" cy="149.5" r="3"/><circle cx="218.7" cy="177.0" r="3"/><circle cx="200.6" cy="200.6" r="3"/><circle cx="177.0" cy="218.7" r="3"/><circle cx="149.5" cy="230.1" r="3"/><circle cx="120.0" cy="234.0" r="3"/><circle cx="90.5" cy="230.1" r="3"/><circle cx="63.0" cy="218.7" r="3"/><circle cx="39.4" cy="200.6" r="3"/><circle cx="21.3" cy="177.0" r="3"/><circle cx="9.9" cy="149.5" r="3"/><circle cx="6.0" cy="120.0" r="3"/><circle cx="9.9" cy="90.5" r="3"/><circle cx="21.3" cy="63.0" r="3"/><circle cx="39.4" cy="39.4" r="3"/><circle cx="63.0" cy="21.3" r="3"/><circle cx="90.5" cy="9.9" r="3"/></g>
+            <g font-family="IBM Plex Mono, Consolas, monospace" text-anchor="middle">
+              <text x="120" y="34" font-size="26" font-weight="500" fill="#ff3b30">SNEAK</text>
+              <text x="120" y="60" font-size="17" font-weight="500" fill="#ff3b30">LOOKING</text>
+              <text x="120" y="196" font-size="9.5" fill="#848484">round 3</text>
+              <text x="120" y="208" font-size="9.5" fill="#848484">caught 1</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><b>Look.</b> The whole rim is solid red and everyone is frozen mid-step. Anyone still moving after 0.4 s is about to hear about it.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="bezel">
+          <svg viewBox="0 0 240 240" role="img" aria-label="Caught on the round screen: one player at 2.4 metres, 18 degrees right, with the rim pointing at them">
+            <circle cx="120" cy="120" r="120" fill="#000"/>
+            <g fill="none" stroke="#004000">
+              <path d="M95.8,170 A28,28 0 0 1 144.2,170"/>
+              <path d="M71.5,156 A56,56 0 0 1 168.5,156"/>
+              <path d="M47.3,142 A84,84 0 0 1 192.7,142"/>
+            </g>
+            <g fill="none" stroke="#008000">
+              <path d="M120,184 L23,128 A112,112 0 0 1 217,128 Z"/>
+              <line x1="120" y1="72" x2="120" y2="78"/>
+            </g>
+            <circle cx="120" cy="184" r="2" fill="#008000"/>
+            <g fill="#8a1d18"><circle cx="97" cy="124" r="4"/><circle cx="168" cy="122" r="4"/></g>
+            <circle cx="134" cy="141" r="5.5" fill="#ff3b30"/>
+            <g fill="#5a0000"><circle cx="120.0" cy="6.0" r="3"/><circle cx="149.5" cy="9.9" r="3"/><circle cx="218.7" cy="63.0" r="3"/><circle cx="230.1" cy="90.5" r="3"/><circle cx="234.0" cy="120.0" r="3"/><circle cx="230.1" cy="149.5" r="3"/><circle cx="218.7" cy="177.0" r="3"/><circle cx="200.6" cy="200.6" r="3"/><circle cx="177.0" cy="218.7" r="3"/><circle cx="149.5" cy="230.1" r="3"/><circle cx="120.0" cy="234.0" r="3"/><circle cx="90.5" cy="230.1" r="3"/><circle cx="63.0" cy="218.7" r="3"/><circle cx="39.4" cy="200.6" r="3"/><circle cx="21.3" cy="177.0" r="3"/><circle cx="9.9" cy="149.5" r="3"/><circle cx="6.0" cy="120.0" r="3"/><circle cx="9.9" cy="90.5" r="3"/><circle cx="21.3" cy="63.0" r="3"/><circle cx="39.4" cy="39.4" r="3"/><circle cx="63.0" cy="21.3" r="3"/><circle cx="90.5" cy="9.9" r="3"/></g>
+            <g fill="#ffffff"><circle cx="177.0" cy="21.3" r="3.6"/><circle cx="200.6" cy="39.4" r="3.6"/></g>
+            <g font-family="IBM Plex Mono, Consolas, monospace" text-anchor="middle">
+              <text x="120" y="34" font-size="26" font-weight="500" fill="#ff3b30">SNEAK</text>
+              <text x="120" y="60" font-size="17" font-weight="500" fill="#ff3b30">CAUGHT</text>
+              <text x="120" y="196" font-size="9.5" fill="#ffffff">2.4 m, +18 deg</text>
+              <text x="120" y="208" font-size="9.5" fill="#ff3b30">back to the start!</text>
+              <text x="120" y="220" font-size="9.5" fill="#848484">caught 2</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><b>Caught.</b> Someone at 2.4&nbsp;m, 18° off centre, twitched. The rim — and the real ring on the front — points at them for the room; the screen gives the exact spot.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Across the room</div>
+      <h2>Read the ring, not the screen</h2>
+      <p>The players can't see the screen, so the 24-LED ring on the front tells them everything they need.</p>
+    </div>
+
+    <ul class="ring-list">
+      <li><span class="dot r-idle" aria-hidden="true"></span><span class="when">Ready</span><span class="desc">Slow white breathing. Waiting for SELECT.</span></li>
+      <li><span class="dot r-green" aria-hidden="true"></span><span class="when">Blind</span><span class="desc">Green, with a bright spot chasing round. Go.</span></li>
+      <li><span class="dot r-turn" aria-hidden="true"></span><span class="when">Turning</span><span class="desc">Fast amber flashing. Stop now — nobody can say they didn't see it coming.</span></li>
+      <li><span class="dot r-red" aria-hidden="true"></span><span class="when">Look</span><span class="desc">Solid red, no animation. It's watching, and it holds still too.</span></li>
+      <li><span class="dot r-caught" aria-hidden="true"></span><span class="when">Caught</span><span class="desc">Pulsing red, with a steady white light pointing at each player who moved.</span></li>
+      <li><span class="dot r-win" aria-hidden="true"></span><span class="when">Tagged</span><span class="desc">Rainbow. Someone reached the badge.</span></li>
+    </ul>
+
+    <div class="prose">
+      <h3>How the pointer works</h3>
+      <p>Read the ring like a compass facing the room: 12 o'clock is straight ahead of the badge. A white light on the badge's left means the player on the left, as you see it standing in front of it, so it reads correctly from anywhere in the room.</p>
+      <p>Angles are stretched one and a half times so that players standing close together get separate lights. Two players within about 10° of each other share one light: sort it out between you, or both go back.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">With a piezo fitted</div>
+      <h2>Listen, too</h2>
+      <p>The ring is there to be watched, but a player creeping in is watching their own feet. So the referee also calls the game out loud: the warning before it turns is a sound you can't miss while looking at the floor.</p>
+    </div>
+
+    <dl class="spec">
+      <dt>Blind starts</dt><dd>One high beep. Go. You hear it at the start of every blind phase, including the one after a catch.</dd>
+      <dt>Turning</dt><dd>Two falling notes. Stop now.</dd>
+      <dt>Look</dt><dd>Nothing. Silence is the referee watching.</dd>
+      <dt>Caught</dt><dd>A low double buzz. Somebody is walking back.</dd>
+      <dt>Tagged</dt><dd>A rising four-note fanfare.</dd>
+    </dl>
+
+    <div class="prose">
+      <p>Sound needs a piezo on the badge. Rev F boards don't have a place for one, so it is added by hand on the Dev Module's <span class="mono">D32</span> pin; later boards have it built in. Without one the game is exactly the same, just silent. <strong>Settings &rarr; Sound</strong> turns it off, for a game in a room that needs to stay quiet.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Controls</div>
+      <h2>Buttons and the pad</h2>
+      <p>The three buttons are on the back, under the screen: UP, DOWN, SELECT from left to right as you look at the screen. The touch pad is on the front, across the mantle.</p>
+    </div>
+    <dl class="spec">
+      <dt>Touch the bullseye</dt><dd>TAG. The same event as a short SELECT, and the one to aim for at a run. It does nothing in the menu, so a knock against the table can't start or end anything.</dd>
+      <dt>SELECT — Ready</dt><dd>Start a round.</dd>
+      <dt>SELECT — in a round</dt><dd>This is TAG. It counts the moment it goes down, not when you let go, so the win lands under your hand.</dd>
+      <dt>SELECT — hold 0.7 s</dt><dd>Back to the menu, between rounds only (Ready or Tagged). Mid-round a long press does nothing, because a hard slap can easily last that long and must not end everyone's game.</dd>
+      <dt>BOOT — short press</dt><dd>Back to the menu from anywhere, mid-round included. BOOT is the small button on the ESP32 Dev Module itself.</dd>
+      <dt>BOOT — hold 0.8 s</dt><dd>Flip the screen upside down. The scope flips with it so people stay on the correct side.</dd>
+    </dl>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Try it with nothing connected</div>
+      <h2>Demo mode</h2>
+    </div>
+    <div class="prose">
+      <p>If no radar is heard within 3 s of switching on, the badge shows <span class="mono">NO RADAR - DEMO</span> and plays against itself: simulated players creep in while it's blind, some get caught, and every so often one of them tags it. New rounds start by themselves 2.5 s after Ready.</p>
+      <p>Demo runs the real referee on simulated players rather than faking the screen, so what you see is exactly how the game scores. It's a one-time decision at startup: plugging a radar in later needs a restart.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Honest status</div>
+      <h2>Still being tuned</h2>
+      <p>What hasn't been settled yet, most important first.</p>
+    </div>
+    <ul class="gaps prose">
+      <li class="serious">
+        <h3>How still is still enough</h3>
+        <p>The 20 cm threshold comes from bench measurement — enough to ignore breathing and sway, small enough to catch a step — and it holds up in the two-badge Duel game, which is built on the same number. It has not been through a room full of players competitively trying to creep, which is the test that matters.</p>
+      </li>
+      <li class="serious">
+        <h3>Phase lengths are a first guess</h3>
+        <p>In demo, simulated players cross the room in a single blind phase. Real games will probably want shorter blind phases, and they haven't been played at scale yet.</p>
+      </li>
+      <li>
+        <h3>No score</h3>
+        <p>The screen counts rounds and catches, but there are no points and no winner across rounds. Keep score out loud.</p>
+      </li>
+      <li>
+        <h3>Two radars in one room</h3>
+        <p>What a dozen badges in one space do to each other's radar hasn't been measured. Two have been run facing each other without trouble, which is encouraging rather than conclusive.</p>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Sneak rules as implemented in badge/sneak.h, badge/badge.ino, badge/touch.h, badge/ring.h and badge/sound.h, firmware 1.0.44, on the rev F round badge. Timings are taken from the code. Design rationale lives in DESIGN.md §6; the two-badge game is §6a. Sneak replaces Freeze, the earlier multi-badge game, which is archived.
+  </footer>
+
+</main>
+
+</html>

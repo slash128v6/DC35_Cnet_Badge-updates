@@ -1,0 +1,563 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CTF Board</title>
+<meta name="description" content="The DC35 radar badge CTF leaderboard, built on your phone by scanning badges.">
+<meta name="theme-color" content="#0f1a1e">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #eef2f1;
+    --surface: #ffffff;
+    --sunk: #e3eae8;
+    --ink: #14232a;
+    --muted: #56676d;
+    --rule: #cad6d4;
+    --accent: #1d6b73;
+    --good: #17864a;
+    --warn: #a3600a;
+    --bad: #b3261e;
+    --t1: #0a8a99;   /* circle   */
+    --t2: #c8372d;   /* triangle */
+    --t3: #b26f00;   /* star     */
+    --t4: #b0309a;   /* umbrella */
+    --pip-off: #cad6d4;
+    --shadow: 0 1px 2px rgba(20, 35, 42, .06), 0 6px 18px rgba(20, 35, 42, .06);
+    --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f1a1e;
+      --surface: #16252a;
+      --sunk: #11202a;
+      --ink: #e3ecea;
+      --muted: #93a6a9;
+      --rule: #2a3d42;
+      --accent: #5fb7bd;
+      --good: #4cc47f;
+      --warn: #e5a53a;
+      --bad: #ef7b6f;
+      --t1: #2fd4e0;
+      --t2: #ff6a5c;
+      --t3: #ffb23d;
+      --t4: #f06ad8;
+      --pip-off: #2a3d42;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f1a1e;
+    --surface: #16252a;
+    --sunk: #11202a;
+    --ink: #e3ecea;
+    --muted: #93a6a9;
+    --rule: #2a3d42;
+    --accent: #5fb7bd;
+    --good: #4cc47f;
+    --warn: #e5a53a;
+    --bad: #ef7b6f;
+    --t1: #2fd4e0;
+    --t2: #ff6a5c;
+    --t3: #ffb23d;
+    --t4: #f06ad8;
+    --pip-off: #2a3d42;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 16px/1.55 var(--body);
+  }
+  .page {
+    max-width: 40rem;
+    margin: 0 auto;
+    padding-inline: 1rem;
+    padding-block: 2rem 3rem;
+    display: grid;
+    gap: 2rem;
+  }
+  h1, h2, p, ol, ul { margin: 0; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  button { font: inherit; color: inherit; }
+
+  header { display: grid; gap: .6rem; }
+  .eyebrow {
+    font: 500 .72rem/1 var(--mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .eyebrow a { color: inherit; text-decoration: none; }
+  h1 {
+    font: 800 clamp(2.8rem, 12vw, 4rem)/.9 var(--display);
+    text-transform: uppercase;
+    letter-spacing: .01em;
+  }
+  .lede { color: var(--muted); max-width: 40ch; }
+  .status {
+    display: flex; flex-wrap: wrap; gap: .3rem 1.1rem;
+    font: .8rem/1.4 var(--mono); color: var(--muted);
+  }
+  .status b { color: var(--ink); font-weight: 500; }
+
+  h2 {
+    font: 700 1.35rem/1 var(--display);
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+  section { display: grid; gap: .8rem; }
+
+  /* What the last scan did. */
+  .news {
+    display: grid; gap: .15rem;
+    padding: .8rem 1rem;
+    border-radius: 6px;
+    background: var(--surface);
+    border-left: 4px solid var(--c, var(--accent));
+    box-shadow: var(--shadow);
+  }
+  .news .head { font: 700 1.05rem/1.3 var(--body); color: var(--c, var(--accent)); }
+  .news .sub { font-size: .9rem; color: var(--muted); }
+  .news.good { --c: var(--good); }
+  .news.warn { --c: var(--warn); }
+  .news.bad { --c: var(--bad); }
+
+  /* Teams: four totals, two by two on a phone. */
+  .teams { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .6rem; }
+  @media (max-width: 32rem) { .teams { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .team {
+    display: grid; grid-template-columns: auto 1fr; gap: .1rem .55rem; align-items: center;
+    padding: .7rem .8rem;
+    background: var(--surface);
+    border-radius: 6px;
+    box-shadow: var(--shadow);
+  }
+  .team svg { grid-row: span 2; width: 1.6rem; height: 1.6rem; color: var(--c); }
+  .team .tn { font: 500 .7rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .team .tp { font: 700 1.5rem/1 var(--display); font-variant-numeric: tabular-nums; }
+  .team .tc { grid-column: 2; font: .72rem/1.2 var(--mono); color: var(--muted); }
+  .team.empty { opacity: .55; }
+  .t1 { --c: var(--t1); } .t2 { --c: var(--t2); } .t3 { --c: var(--t3); } .t4 { --c: var(--t4); }
+  .t0 { --c: var(--muted); }
+
+  /* The board. */
+  .rows { list-style: none; padding: 0; display: grid; gap: .45rem; }
+  .row { background: var(--surface); border-radius: 6px; box-shadow: var(--shadow); }
+  .row > button {
+    display: grid;
+    grid-template-columns: 2rem 1.1rem minmax(0, 1fr) auto;
+    grid-template-areas: "rank team name score" "rank team pips seen";
+    gap: .15rem .6rem; align-items: center;
+    width: 100%; text-align: left;
+    padding: .65rem .9rem;
+    background: none; border: 0; border-radius: 6px; cursor: pointer;
+  }
+  .rank { grid-area: rank; font: 700 1.3rem/1 var(--display); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .row .tm { grid-area: team; width: 1.1rem; height: 1.1rem; color: var(--c); }
+  .nm { grid-area: name; font: 500 1.05rem/1.2 var(--mono); letter-spacing: .04em; overflow-wrap: anywhere; }
+  .sc { grid-area: score; font: 700 1.45rem/1 var(--display); font-variant-numeric: tabular-nums; text-align: right; }
+  .sc small { font: 500 .7rem var(--mono); color: var(--muted); letter-spacing: .05em; }
+  .pips { grid-area: pips; display: flex; gap: 3px; flex-wrap: wrap; }
+  .pip { width: .55rem; height: .55rem; border-radius: 2px; background: var(--pip-off); }
+  .pip.on { background: var(--good); }
+  .pip.hid { background: transparent; box-shadow: inset 0 0 0 1px var(--pip-off); }
+  .pip.hid.on { background: var(--warn); box-shadow: none; }
+  .seen { grid-area: seen; font: .72rem/1 var(--mono); color: var(--muted); text-align: right; white-space: nowrap; }
+  .rk { margin-left: .5rem; font: 500 .66rem/1 var(--mono); letter-spacing: .08em; text-transform: uppercase; color: var(--muted); vertical-align: .12rem; }
+  .rk.kraken { color: var(--t4); }
+  .mine .nm::after {
+    content: "yours"; margin-left: .5rem; padding: .1rem .35rem; border-radius: 3px;
+    font: 500 .62rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; vertical-align: .15rem;
+    background: var(--accent); color: var(--surface);
+  }
+  .fresh { box-shadow: 0 0 0 2px var(--good), var(--shadow); }
+
+  .more { padding: 0 .9rem .9rem 3.7rem; display: grid; gap: .7rem; }
+  @media (max-width: 32rem) { .more { padding-left: .9rem; } }
+  .flags { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: .15rem 1.2rem; font-size: .88rem; }
+  .flags li { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr) auto; gap: .3rem; color: var(--muted); }
+  .flags li::before { content: ""; }
+  .flags li.on { color: var(--ink); }
+  .flags li.on::before { content: "✓"; color: var(--good); }
+  .flags li span:last-child { font: .78rem/1.9 var(--mono); font-variant-numeric: tabular-nums; }
+  .acts { display: flex; flex-wrap: wrap; gap: .5rem; }
+  .btn {
+    padding: .4rem .8rem; border-radius: 5px;
+    border: 1px solid var(--rule); background: var(--sunk); cursor: pointer;
+    font-size: .88rem;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.danger { color: var(--bad); }
+  .meta { font: .72rem/1.5 var(--mono); color: var(--muted); }
+
+  /* How to scan: the empty board, and a reminder under a full one. */
+  .how {
+    display: grid; gap: .7rem;
+    padding: 1rem 1.1rem;
+    border: 1px dashed var(--rule); border-radius: 6px;
+  }
+  .how ol { padding-left: 1.3rem; display: grid; gap: .35rem; }
+  .how b { font-weight: 700; }
+  kbd { font: 500 .8em var(--mono); padding: .05rem .3rem; border: 1px solid var(--rule); border-radius: 3px; background: var(--sunk); }
+
+  .prose { display: grid; gap: .7rem; color: var(--muted); font-size: .93rem; max-width: 62ch; }
+  .prose strong { color: var(--ink); }
+  footer { font: .75rem/1.6 var(--mono); color: var(--muted); border-top: 1px solid var(--rule); padding-top: 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .fresh { animation: blip 1.2s ease-out 2; }
+    @keyframes blip { 50% { box-shadow: 0 0 0 5px var(--good), var(--shadow); } }
+  }
+</style>
+</head>
+<body>
+<main class="page">
+
+  <header>
+    <div class="eyebrow"><a href="../">DC35 CNet · radar badge</a></div>
+    <h1>CTF Board</h1>
+    <p class="lede">Every badge you've scanned, ranked. The board lives on this phone: scan more badges and it grows.</p>
+    <div class="status" id="status"></div>
+  </header>
+
+  <div class="news" id="news" role="status" hidden>
+    <span class="head" id="newsHead"></span>
+    <span class="sub" id="newsSub"></span>
+  </div>
+
+  <section aria-labelledby="h-teams" id="teamsSec" hidden>
+    <h2 id="h-teams">Teams</h2>
+    <div class="teams" id="teams"></div>
+  </section>
+
+  <section aria-labelledby="h-board">
+    <h2 id="h-board">Badges</h2>
+    <ol class="rows" id="rows"></ol>
+    <div class="how" id="how">
+      <p id="howLead"><b>Scan a badge to put it on the board.</b></p>
+      <ol>
+        <li>On the badge, open <b>CTF</b> and choose <b>Leaderboard</b>.</li>
+        <li>Press <kbd>SELECT</kbd> twice, past Teams, to reach <b>SCAN ME</b>.</li>
+        <li>Point your phone's camera at the QR code and open the link.</li>
+      </ol>
+    </div>
+  </section>
+
+  <section aria-labelledby="h-about">
+    <h2 id="h-about">About this board</h2>
+    <div class="prose">
+      <p><strong>It stays on your phone.</strong> A scan carries a badge's name, score, flags and team, plus an id made from a hash. They ride in the link after the <code>#</code>, which your browser never sends to the website. The board is kept in this browser and goes nowhere else.</p>
+      <p><strong>Bragging rights only.</strong> It trusts badges the way the badges trust each other. Scores that don't add up are refused, and anything worth a prize gets checked in person.</p>
+      <p><strong>Works without signal.</strong> After the first visit the page loads offline, so scanning works in a basement hall. On Android you can also add it to the home screen. On an iPhone, keep it in Safari: that's where a scanned link opens.</p>
+    </div>
+    <div class="acts">
+      <button class="btn danger" id="clear" type="button">Clear this board</button>
+    </div>
+  </section>
+
+  <footer>
+    <span>Published with firmware 1.0.56</span>
+    <a href="../docs/badge_guide.html">Badge guide</a>
+  </footer>
+
+</main>
+
+<script>
+(function () {
+  "use strict";
+
+  // The challenges, in bit order: ctf.h's CH[]. Score must equal the sum of
+  // the captured flags' points, or the entry is refused. The last one is the
+  // hidden flag; its name stays hidden here too.
+  var FLAGS = [
+    ["Radar lock", 100], ["Serial", 100], ["SAO Morse", 150], ["SAO I2C", 200],
+    ["Squid 500", 50], ["Squoom 300", 50], ["Duel", 50], ["SAO set", 50],
+    ["Butterfly", 50], ["Squidling", 50], ["The Deep", 200], ["Hidden flag", 137]
+  ];
+  var HIDDEN = 11;
+  var TEAMS = ["No team", "Circle", "Triangle", "Star", "Umbrella"];
+  var KEY = "dc35-ctf-board-v1";
+
+  // ---- storage: per phone, and the page still works when it is refused ----
+  var storageOk = true;
+  function load() {
+    try {
+      var v = JSON.parse(localStorage.getItem(KEY));
+      if (v && typeof v.rows === "object") return v;
+    } catch (e) { storageOk = false; }
+    return { rows: {}, mine: null };
+  }
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); }
+    catch (e) { storageOk = false; }
+  }
+  var state = load();
+  var fresh = null;          // id of the badge the last scan touched
+  var open = null;           // id of the expanded row
+
+  // ---- the link: '1', then 24-character base64url entries (ctf.h) ---------
+  function bytes(chunk) {
+    var s = chunk.replace(/-/g, "+").replace(/_/g, "/");
+    var bin = atob(s);
+    var out = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+    return out;
+  }
+
+  // Format 1: 18-byte entries, 24 characters. Format 2 (firmware 1.0.52 on):
+  // 21 bytes, 28 characters, with THE DEEP SIGNAL's progress in byte 18 -
+  // chapters done in bits 0-2, answered in bit 3, surfaced in bit 4.
+  var RANKS = ["Plankton", "Hatchling", "Squid", "Giant squid", "Kraken"];
+  function rankOf(q) {
+    if (q & 8) return 4;
+    var c = q & 7;
+    return c >= 5 ? 3 : c >= 3 ? 2 : c >= 1 ? 1 : 0;
+  }
+  function parse(chunk, len) {
+    if (!new RegExp("^[A-Za-z0-9_-]{" + len + "}$").test(chunk)) return { err: "garbled" };
+    var b = bytes(chunk);
+    if (b.length !== len * 3 / 4) return { err: "garbled" };
+    var dv = new DataView(b.buffer);
+    var id = dv.getUint32(0, true);
+    var name = "";
+    for (var i = 4; i < 12 && b[i]; i++) {
+      if (b[i] < 0x20 || b[i] > 0x7e) return { err: "garbled" };
+      name += String.fromCharCode(b[i]);
+    }
+    var score = dv.getUint16(12, true), flags = dv.getUint16(14, true), gen = dv.getUint16(16, true);
+    var team = (flags >> 12) & 7;
+    if (!id || !name.trim() || (flags & 0x8000) || team > 4) return { err: "impossible" };
+    var sum = 0;
+    for (var k = 0; k < FLAGS.length; k++) if (flags & (1 << k)) sum += FLAGS[k][1];
+    if (sum !== score) return { err: "impossible" };
+    var q = b.length > 18 ? b[18] : 0;
+    if ((q & ~0x1f) || (q & 7) > 5) return { err: "impossible" };
+    return {
+      id: ("0000000" + id.toString(16)).slice(-8),
+      name: name.trim(), score: score, flags: flags & 0xfff, team: team, gen: gen, quest: q
+    };
+  }
+
+  function newer(a, b) { var d = (a - b) & 0xffff; return d !== 0 && d < 0x8000; }
+
+  function ingest(hash) {
+    if (!hash || hash.length < 2) return;
+    history.replaceState(null, "", location.pathname + location.search);
+    var body = hash.slice(1);
+    var len = body[0] === "2" ? 28 : body[0] === "1" ? 24 : 0;
+    if (!len || (body.length - 1) % len || body.length < len + 1) {
+      return say("bad", "That link isn't a badge", "It may come from newer firmware than this page knows. Reload with signal and scan again.");
+    }
+    var added = 0, updated = 0, same = 0, refused = 0, last = null, oldScore = null;
+    for (var p = 1; p < body.length; p += len) {
+      var e = parse(body.slice(p, p + len), len);
+      if (e.err) { refused++; continue; }
+      var have = state.rows[e.id];
+      e.seen = Date.now();
+      if (!have) { state.rows[e.id] = e; added++; }
+      else if (newer(e.gen, have.gen)) { oldScore = have.score; state.rows[e.id] = e; updated++; }
+      else { have.seen = e.seen; same++; }
+      last = state.rows[e.id];
+    }
+    save();
+    if (!last) return say("bad", "Refused", "The score in that link doesn't add up, so it stays off the board.");
+    fresh = last.id;
+    var pts = last.score + " pts";
+    if (added) say("good", last.name + " is on the board", pts + " · ranked " + rankOf(last.id) + " of " + count());
+    else if (updated) say("good", last.name + " updated", (oldScore === null ? "" : oldScore + " → ") + pts + " · ranked " + rankOf(last.id));
+    else say("warn", last.name + " is already here", "Nothing new since the last scan · " + pts);
+    if (!storageOk) say("warn", last.name + " scanned, not saved", "This browser won't let the page keep anything (a private tab?), so the board resets when you leave.");
+  }
+
+  function say(kind, head, sub) {
+    var n = document.getElementById("news");
+    n.className = "news " + kind;
+    document.getElementById("newsHead").textContent = head;
+    document.getElementById("newsSub").textContent = sub;
+    n.hidden = false;
+  }
+
+  // ---- board ---------------------------------------------------------------
+  function list() {
+    var all = Object.keys(state.rows).map(function (k) { return state.rows[k]; });
+    all.sort(function (a, b) { return b.score - a.score || (a.name < b.name ? -1 : a.name > b.name ? 1 : 0); });
+    return all;
+  }
+  function count() { return Object.keys(state.rows).length; }
+  function rankOf(id) {
+    var l = list();
+    for (var i = 0; i < l.length; i++) if (l[i].id === id) return i + 1;
+    return 0;
+  }
+
+  function ago(t) {
+    var s = (Date.now() - t) / 1000;
+    if (s < 60) return "just now";
+    if (s < 3600) return Math.floor(s / 60) + " min ago";
+    if (s < 86400) return Math.floor(s / 3600) + " h ago";
+    return new Date(t).toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  }
+
+  var SHAPES = {
+    1: '<circle cx="12" cy="12" r="8"/>',
+    2: '<path d="M12 3.5 21 19.5H3z"/>',
+    3: '<path d="m12 2.8 2.7 5.9 6.4.7-4.8 4.3 1.3 6.3L12 16.8 6.4 20l1.3-6.3L2.9 9.4l6.4-.7z"/>',
+    4: '<path d="M2.5 12a9.5 8 0 0 1 19 0z"/><path d="M12 12v7a2 2 0 0 1-4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>',
+    0: '<circle cx="12" cy="12" r="7" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/>'
+  };
+  function shape(t, cls) {
+    return '<svg class="' + cls + '" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + SHAPES[t] + "</svg>";
+  }
+
+  function el(tag, cls, text) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  }
+
+  function render() {
+    var rows = list();
+    var n = rows.length;
+
+    var st = document.getElementById("status");
+    st.innerHTML = "";
+    var bits = [[n, n === 1 ? " badge" : " badges"]];
+    if (n) bits.push([rows[0].score, " pts top"]);
+    var latest = 0;
+    rows.forEach(function (r) { if (r.seen > latest) latest = r.seen; });
+    st.appendChild(span(bits[0]));
+    if (n) st.appendChild(span(bits[1]));
+    if (latest) st.appendChild(el("span", "", "last scan " + ago(latest)));
+
+    // Teams, ranked by points, as on the badge.
+    var pts = [0, 0, 0, 0, 0], cnt = [0, 0, 0, 0, 0];
+    rows.forEach(function (r) { pts[r.team] += r.score; cnt[r.team]++; });
+    var order = [1, 2, 3, 4].sort(function (a, b) { return pts[b] - pts[a]; });
+    var tw = document.getElementById("teams");
+    tw.innerHTML = "";
+    order.forEach(function (t) {
+      var d = el("div", "team t" + t + (cnt[t] ? "" : " empty"));
+      d.innerHTML = shape(t, "");
+      d.appendChild(el("span", "tn", TEAMS[t]));
+      d.appendChild(el("span", "tp", String(pts[t])));
+      d.appendChild(el("span", "tc", cnt[t] + (cnt[t] === 1 ? " badge" : " badges")));
+      tw.appendChild(d);
+    });
+    document.getElementById("teamsSec").hidden = !n;
+
+    var ol = document.getElementById("rows");
+    ol.innerHTML = "";
+    rows.forEach(function (r, i) {
+      var li = el("li", "row t" + r.team + (r.id === state.mine ? " mine" : "") + (r.id === fresh ? " fresh" : ""));
+      var b = el("button");
+      b.type = "button";
+      b.setAttribute("aria-expanded", String(open === r.id));
+      b.appendChild(el("span", "rank", String(i + 1)));
+      b.insertAdjacentHTML("beforeend", shape(r.team, "tm"));
+      var nm = el("span", "nm", r.name);
+      if (r.quest) nm.appendChild(el("span", "rk" + ((r.quest & 8) ? " kraken" : ""), RANKS[rankOf(r.quest)]));
+      b.appendChild(nm);
+      var sc = el("span", "sc", String(r.score));
+      sc.appendChild(el("small", "", " pts"));
+      b.appendChild(sc);
+      var pips = el("span", "pips");
+      var got = 0;
+      FLAGS.forEach(function (f, k) {
+        var on = !!(r.flags & (1 << k));
+        if (on) got++;
+        if (k === HIDDEN && !on) { pips.appendChild(el("span", "pip hid")); return; }
+        pips.appendChild(el("span", "pip" + (k === HIDDEN ? " hid" : "") + (on ? " on" : "")));
+      });
+      pips.setAttribute("aria-label", got + " of " + FLAGS.length + " flags");
+      b.appendChild(pips);
+      b.appendChild(el("span", "seen", ago(r.seen)));
+      b.addEventListener("click", function () { open = open === r.id ? null : r.id; render(); });
+      li.appendChild(b);
+
+      if (open === r.id) {
+        var more = el("div", "more");
+        var fl = el("ul", "flags");
+        FLAGS.forEach(function (f, k) {
+          var on = !!(r.flags & (1 << k));
+          var it = el("li", on ? "on" : "");
+          it.appendChild(el("span", "", f[0]));
+          it.appendChild(el("span", "", String(f[1])));
+          fl.appendChild(it);
+        });
+        more.appendChild(fl);
+        more.appendChild(el("div", "meta", TEAMS[r.team] + " · " + RANKS[rankOf(r.quest || 0)] +
+          (r.quest ? " · " + (r.quest & 7) + " of 5 chapters" + ((r.quest & 8) ? ", answered the deep" : "") : "") +
+          " · badge id " + r.id + " · update " + r.gen));
+        var acts = el("div", "acts");
+        var mine = el("button", "btn", r.id === state.mine ? "Not my badge" : "This is my badge");
+        mine.type = "button";
+        mine.addEventListener("click", function () { state.mine = state.mine === r.id ? null : r.id; save(); render(); });
+        var rm = el("button", "btn danger", "Remove");
+        rm.type = "button";
+        rm.addEventListener("click", function () {
+          if (!confirm("Take " + r.name + " off this board? Scan the badge again to put it back.")) return;
+          delete state.rows[r.id];
+          if (state.mine === r.id) state.mine = null;
+          open = null; save(); render();
+        });
+        acts.appendChild(mine);
+        acts.appendChild(rm);
+        more.appendChild(acts);
+        li.appendChild(more);
+      }
+      ol.appendChild(li);
+    });
+
+    document.getElementById("howLead").innerHTML = n
+      ? "<b>Add another badge</b>"
+      : "<b>Scan a badge to put it on the board.</b>";
+    document.getElementById("clear").hidden = !n;
+  }
+
+  function span(pair) {
+    var s = el("span");
+    s.appendChild(el("b", "", String(pair[0])));
+    s.appendChild(document.createTextNode(pair[1]));
+    return s;
+  }
+
+  document.getElementById("clear").addEventListener("click", function () {
+    if (!confirm("Clear every badge from this board? You'd have to scan them all again.")) return;
+    state = { rows: {}, mine: null };
+    fresh = null; open = null;
+    save(); render();
+    document.getElementById("news").hidden = true;
+  });
+
+  ingest(location.hash);
+  render();
+  // A second scan into a tab that is already open arrives as a new hash.
+  window.addEventListener("hashchange", function () { ingest(location.hash); render(); });
+  // Keep "5 min ago" honest while the page sits open.
+  setInterval(render, 60000);
+
+  if ("serviceWorker" in navigator && location.protocol === "https:") {
+    navigator.serviceWorker.register("sw.js").catch(function () {});
+  }
+})();
+</script>
+</body>
+</html>

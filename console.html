@@ -1,0 +1,616 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Badge Console</title>
+<meta name="description" content="Plug in a DC35 radar badge and drive it from Chrome or Edge: see its screen, press its buttons, read its CTF board, set its name.">
+<link rel="icon" type="image/png" href="board/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Atkinson+Hyperlegible:wght@400;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #eef2f1;
+    --surface: #ffffff;
+    --sunk: #e3eae8;
+    --ink: #14232a;
+    --muted: #56676d;
+    --rule: #cad6d4;
+    --accent: #1d6b73;
+    --good: #17864a;
+    --warn: #a3600a;
+    --bad: #b3261e;
+    --term: #0f1a1e;
+    --term-ink: #cfe0dd;
+    --term-dim: #6f878b;
+    --shadow: 0 1px 2px rgba(20, 35, 42, .06), 0 6px 18px rgba(20, 35, 42, .06);
+    --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f1a1e; --surface: #16252a; --sunk: #11202a; --ink: #e3ecea; --muted: #93a6a9;
+      --rule: #2a3d42; --accent: #5fb7bd; --good: #4cc47f; --warn: #e5a53a; --bad: #ef7b6f;
+      --term: #091215; --term-ink: #cfe0dd; --term-dim: #5d7377;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f1a1e; --surface: #16252a; --sunk: #11202a; --ink: #e3ecea; --muted: #93a6a9;
+    --rule: #2a3d42; --accent: #5fb7bd; --good: #4cc47f; --warn: #e5a53a; --bad: #ef7b6f;
+    --term: #091215; --term-ink: #cfe0dd; --term-dim: #5d7377;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  body { margin: 0; background: var(--ground); color: var(--ink); font: 16px/1.55 var(--body); }
+  .page { max-width: 72rem; margin: 0 auto; padding-inline: 1.25rem; padding-block: 2.2rem 3rem; display: grid; gap: 1.6rem; }
+  h1, h2, h3, p, ol, ul, dl, dd { margin: 0; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; }
+  button, input, select { font: inherit; color: inherit; }
+  code, kbd { font-family: var(--mono); font-size: .88em; }
+
+  header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 1rem 2rem; }
+  .eyebrow { font: 500 .72rem/1 var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--accent); }
+  .eyebrow a { color: inherit; text-decoration: none; }
+  h1 { font: 800 clamp(2.6rem, 7vw, 3.8rem)/.9 var(--display); text-transform: uppercase; margin-top: .5rem; }
+  h2 { font: 700 1.25rem/1 var(--display); text-transform: uppercase; letter-spacing: .03em; }
+  .conn { display: flex; align-items: center; gap: .8rem; flex-wrap: wrap; }
+  .dot { width: .6rem; height: .6rem; border-radius: 50%; background: var(--rule); }
+  .dot.on { background: var(--good); box-shadow: 0 0 0 3px color-mix(in srgb, var(--good) 25%, transparent); }
+  .connword { font: .82rem var(--mono); color: var(--muted); }
+
+  .btn { padding: .5rem 1rem; border-radius: 6px; border: 1px solid var(--rule); background: var(--surface); cursor: pointer; }
+  .btn:hover:not(:disabled) { border-color: var(--accent); }
+  .btn:disabled { opacity: .45; cursor: default; }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--surface); font-weight: 700; }
+  .btn.small { padding: .3rem .65rem; font-size: .85rem; }
+
+  .note { padding: .9rem 1.1rem; border-radius: 6px; background: var(--surface); border-left: 4px solid var(--warn); box-shadow: var(--shadow); color: var(--muted); }
+  .note strong { color: var(--ink); }
+
+  .grid { display: grid; grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); gap: 1.2rem; align-items: start; }
+  @media (max-width: 56rem) { .grid { grid-template-columns: minmax(0, 1fr); } }
+  .panel { background: var(--surface); border-radius: 8px; box-shadow: var(--shadow); padding: 1.1rem 1.2rem 1.25rem; display: grid; gap: .9rem; align-content: start; }
+  .panel > .head { display: flex; align-items: baseline; justify-content: space-between; gap: .6rem; }
+  .stack { display: grid; gap: 1.2rem; }
+  .off .needs { opacity: .5; pointer-events: none; }
+
+  /* The screen: the badge's round glass, at twice its pixels. */
+  .glass { position: relative; width: min(100%, 18rem); aspect-ratio: 1; margin-inline: auto; border-radius: 50%; background: #000; box-shadow: 0 0 0 6px var(--sunk), 0 0 0 7px var(--rule); overflow: hidden; }
+  .glass canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+  .glass .idle { position: absolute; inset: 0; display: grid; place-items: center; text-align: center; padding: 2.5rem; font: .8rem/1.5 var(--mono); color: #6f878b; }
+  .shotrow { display: flex; justify-content: center; align-items: center; gap: .8rem; flex-wrap: wrap; font-size: .85rem; color: var(--muted); }
+  .shotrow label { display: flex; gap: .35rem; align-items: center; cursor: pointer; }
+
+  .remote { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .45rem; }
+  .remote .btn { padding: .55rem .3rem; font-size: .9rem; }
+  .remote .wide { grid-column: span 3; }
+  .keys { font: .72rem/1.5 var(--mono); color: var(--muted); text-align: center; }
+  .field { display: grid; gap: .3rem; }
+  .field label { font: 500 .7rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+  .row { display: flex; gap: .5rem; flex-wrap: wrap; }
+  .row > input, .row > select { flex: 1 1 10rem; min-width: 0; }
+  input[type=text], input[type=password], select {
+    padding: .45rem .6rem; border-radius: 6px; border: 1px solid var(--rule); background: var(--ground);
+  }
+  input.mono { font-family: var(--mono); letter-spacing: .06em; text-transform: uppercase; }
+
+  dl.facts { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: .3rem 1rem; font-size: .93rem; }
+  dl.facts dt { color: var(--muted); }
+  dl.facts dd { font-family: var(--mono); overflow-wrap: anywhere; }
+  .two { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.2rem; }
+  @media (max-width: 40rem) { .two { grid-template-columns: minmax(0, 1fr); } }
+
+  .score { display: flex; align-items: baseline; gap: .6rem; flex-wrap: wrap; }
+  .score b { font: 800 2.4rem/1 var(--display); font-variant-numeric: tabular-nums; }
+  .score span { color: var(--muted); font-size: .9rem; }
+  .flags { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); gap: .1rem 1.2rem; font-size: .9rem; }
+  .flags li { display: grid; grid-template-columns: 1.1rem minmax(0, 1fr) auto; gap: .3rem; color: var(--muted); }
+  .flags li::before { content: ""; }
+  .flags li.on { color: var(--ink); }
+  .flags li.on::before { content: "✓"; color: var(--good); }
+  .flags li span:last-child { font: .78rem/1.9 var(--mono); }
+  table { width: 100%; border-collapse: collapse; font-size: .9rem; }
+  th { text-align: left; font: 500 .68rem/1 var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); padding: .4rem .4rem; border-bottom: 1px solid var(--rule); }
+  td { padding: .35rem .4rem; border-bottom: 1px solid var(--rule); font-variant-numeric: tabular-nums; }
+  td.n { text-align: right; font-family: var(--mono); }
+  tr.me td { color: var(--good); font-weight: 700; }
+  .scroll { overflow-x: auto; }
+  .empty { color: var(--muted); font-size: .9rem; }
+  .msg { font-size: .88rem; min-height: 1.3em; }
+  .msg.good { color: var(--good); } .msg.bad { color: var(--bad); }
+
+  /* The serial log: the badge's own voice. */
+  .term { background: var(--term); color: var(--term-ink); border-radius: 8px; box-shadow: var(--shadow); display: grid; grid-template-rows: auto minmax(0, 1fr) auto; height: 26rem; overflow: hidden; }
+  .term .bar { display: flex; justify-content: space-between; align-items: center; padding: .55rem .9rem; font: 500 .7rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; color: var(--term-dim); border-bottom: 1px solid #1f3237; }
+  .term .bar button { background: none; border: 1px solid #1f3237; color: var(--term-dim); border-radius: 4px; padding: .2rem .5rem; cursor: pointer; font: inherit; letter-spacing: .08em; }
+  .log { margin: 0; padding: .6rem .9rem; overflow: auto; font: .8rem/1.45 var(--mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+  .log .ok { color: #6fd39a; } .log .err { color: #ff8c80; } .log .tag { color: var(--term-dim); } .log .me { color: #f0c062; }
+  .term form { display: flex; border-top: 1px solid #1f3237; }
+  .term form span { padding: .55rem .2rem .55rem .9rem; font: .85rem var(--mono); color: #f0c062; }
+  .term input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--term-ink); font: .85rem var(--mono); padding: .55rem .9rem .55rem .3rem; }
+  .term input:focus { outline: none; }
+
+  footer { font: .75rem/1.6 var(--mono); color: var(--muted); border-top: 1px solid var(--rule); padding-top: 1rem; display: flex; flex-wrap: wrap; justify-content: space-between; gap: .5rem 1rem; }
+</style>
+</head>
+<body>
+<main class="page off" id="page">
+
+  <header>
+    <div>
+      <div class="eyebrow"><a href="./">DC35 CNet · radar badge</a></div>
+      <h1>Badge Console</h1>
+    </div>
+    <div class="conn">
+      <span class="dot" id="dot"></span>
+      <span class="connword" id="connword">not connected</span>
+      <button class="btn primary" id="connect" type="button">Connect a badge</button>
+      <button class="btn" id="disconnect" type="button" hidden>Disconnect</button>
+    </div>
+  </header>
+
+  <div class="note" id="nosupport" hidden>
+    <strong>This page needs Chrome or Edge on a computer.</strong> It talks to the badge over USB with the browser's serial support, which Firefox, Safari and phones don't have. The <a href="board/">CTF board</a> works on any phone.
+  </div>
+  <div class="note" id="howto">
+    <strong>Plug the badge into this computer with a USB-C data cable, then Connect.</strong> Pick the badge's port in the list Chrome shows (CP210x or USB Serial). Nothing is installed and nothing leaves this computer: the page talks to the badge directly.
+  </div>
+
+  <div class="grid">
+    <div class="stack">
+      <section class="panel" aria-labelledby="h-screen">
+        <div class="head"><h2 id="h-screen">Screen</h2></div>
+        <div class="glass">
+          <canvas id="screen" width="240" height="240"></canvas>
+          <div class="idle" id="screenIdle">Connect, then Capture to see the badge's screen here.</div>
+        </div>
+        <div class="shotrow needs">
+          <button class="btn small" id="shot" type="button">Capture</button>
+          <label><input type="checkbox" id="autoShot" checked> after each button</label>
+        </div>
+        <div class="remote needs" aria-label="The badge's buttons">
+          <span></span>
+          <button class="btn" data-key="U" type="button">▲ Up</button>
+          <span></span>
+          <button class="btn" data-key="B" type="button">Boot</button>
+          <button class="btn" data-key="S" type="button">Select</button>
+          <button class="btn" data-key="T" type="button">Top pad</button>
+          <span></span>
+          <button class="btn" data-key="D" type="button">▼ Down</button>
+          <span></span>
+          <button class="btn wide" data-key="L" type="button">Hold Select · back</button>
+        </div>
+        <p class="keys">Keys: ↑ ↓ · Enter select · Backspace back · B boot</p>
+        <div class="field needs">
+          <label for="mode">Jump to a mode</label>
+          <div class="row">
+            <select id="mode">
+              <optgroup label="Games">
+                <option value="SQUID">Squirt</option><option value="RUSH">Kraken Run</option>
+                <option value="SQUOOM">Squoom</option><option value="STACK">Squidfall</option>
+                <option value="PET">Pet squid</option><option value="THEREMIN">Theremin</option>
+                <option value="COMPOSE">Compose</option><option value="MORSE">Morse</option>
+                <option value="FOX">Fox hunt</option><option value="BOTTLE">Spin the bottle</option>
+                <option value="TTT">Tic-tac-toe</option><option value="TRAILS">Neon trails</option>
+                <option value="OUTBREAK">Outbreak</option><option value="SNEAK">Sneak</option>
+                <option value="DUEL">Duel</option>
+              </optgroup>
+              <optgroup label="Bling">
+                <option value="BLING">Ring bling</option><option value="COMPUNET">CompuNet</option>
+                <option value="DEFCON">DEF CON</option><option value="FLYERS">Flying squids</option>
+                <option value="LIFE">Life</option><option value="SWARM">Swarm</option>
+                <option value="CARD">Contact card</option><option value="TORCH">Flashlight</option>
+              </optgroup>
+              <optgroup label="Desk">
+                <option value="CLOCK">Ring clock</option><option value="HASS">Home Assistant</option>
+                <option value="BOSS">Boss mode</option><option value="WATCH">Wi-Fi watch</option>
+                <option value="SPEED">Speed gun</option><option value="BLUEBOX">Blue box</option>
+                <option value="SAO">SAOs</option><option value="BENCH">SAO bench</option>
+              </optgroup>
+              <optgroup label="Other">
+                <option value="CTF">CTF</option><option value="MENU" selected>Main menu</option>
+              </optgroup>
+            </select>
+            <button class="btn" id="go" type="button">Go</button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <div class="two">
+        <section class="panel" aria-labelledby="h-badge">
+          <div class="head"><h2 id="h-badge">This badge</h2><button class="btn small needs" id="refresh" type="button">Refresh</button></div>
+          <dl class="facts">
+            <dt>Name</dt><dd id="fName">–</dd>
+            <dt>Firmware</dt><dd id="fFw">–</dd>
+            <dt>Wi-Fi</dt><dd id="fWifi">–</dd>
+          </dl>
+          <div class="field needs">
+            <label for="name">Name · 8 letters, digits, space, dash</label>
+            <div class="row"><input type="text" class="mono" id="name" maxlength="8" autocomplete="off"><button class="btn" id="setName" type="button">Set</button></div>
+          </div>
+          <div class="field needs">
+            <label for="card">Contact card · up to 60 characters</label>
+            <div class="row"><input type="text" id="card" maxlength="60" placeholder="a link, a handle, an email" autocomplete="off"><button class="btn" id="setCard" type="button">Set</button></div>
+          </div>
+          <p class="msg" id="badgeMsg" role="status"></p>
+        </section>
+
+        <section class="panel" aria-labelledby="h-wifi">
+          <div class="head"><h2 id="h-wifi">Wi-Fi</h2></div>
+          <p class="empty">Set the network for updates and Home Assistant without the setup page. The password goes down the USB cable to the badge, and nowhere else.</p>
+          <div class="field needs">
+            <label for="ssid">Network name</label>
+            <input type="text" id="ssid" autocomplete="off">
+          </div>
+          <div class="field needs">
+            <label for="pass">Password</label>
+            <input type="password" id="pass" autocomplete="off">
+          </div>
+          <div class="row needs"><button class="btn" id="setWifi" type="button">Save to the badge</button><button class="btn" id="checkUpdate" type="button">Check for an update</button></div>
+          <p class="msg" id="wifiMsg" role="status"></p>
+        </section>
+      </div>
+
+      <section class="panel" aria-labelledby="h-ctf">
+        <div class="head"><h2 id="h-ctf">CTF</h2><button class="btn small needs" id="ctfRefresh" type="button">Refresh</button></div>
+        <div class="score"><b id="cScore">–</b><span id="cFlags">connect to read the badge's flags</span></div>
+        <ul class="flags" id="flagList"></ul>
+        <div class="field needs">
+          <label for="code">Enter a flag code</label>
+          <div class="row"><input type="text" class="mono" id="code" maxlength="8" autocomplete="off" placeholder="8 characters"><button class="btn" id="submitCode" type="button">Try it</button></div>
+        </div>
+        <p class="msg" id="ctfMsg" role="status"></p>
+        <h3 class="eyebrow">Leaderboard on this badge</h3>
+        <div class="scroll"><table>
+          <thead><tr><th>#</th><th>Badge</th><th>Team</th><th style="text-align:right">Points</th></tr></thead>
+          <tbody id="board"><tr><td colspan="4" class="empty">–</td></tr></tbody>
+        </table></div>
+        <p id="phoneRow" hidden><a id="phoneLink" href="board/" target="_blank" rel="noopener">Add this badge to the CTF board in this browser</a></p>
+      </section>
+    </div>
+  </div>
+
+  <section class="term" aria-labelledby="h-log">
+    <div class="bar"><span id="h-log">Serial · 115200</span><button type="button" id="clearLog">Clear</button></div>
+    <pre class="log" id="log" aria-live="off"></pre>
+    <form id="cmdForm"><span>&gt;</span><input id="cmd" type="text" placeholder="a command, such as HELP" autocomplete="off" spellcheck="false" aria-label="Command"></form>
+  </section>
+
+  <footer>
+    <span>Published with firmware 1.0.56 · Chrome or Edge, on a computer</span>
+    <span><a href="install.html">Flash firmware</a> · <a href="docs/badge_guide.html">Badge guide</a></span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  "use strict";
+  var $ = function (id) { return document.getElementById(id); };
+  var FLAG_NAMES = { "RADAR LOCK": "Radar lock", "SERIAL": "Serial", "SAO MORSE": "SAO Morse", "SAO I2C": "SAO I2C",
+    "SQUID 500": "Squid 500", "SQUOOM 300": "Squoom 300", "DUEL": "Duel", "SAO SET": "SAO set", "BUTTERFLY": "Butterfly",
+    "SQUIDLING": "Squidling", "THE DEEP": "The Deep", "?????": "Hidden flag", "1337": "1337" };
+  var TEAMS = ["–", "Circle", "Triangle", "Star", "Umbrella"];
+  var RANKS = ["Plankton", "Hatchling", "Squid", "Giant squid", "Kraken"];
+  function rankOf(q) { if (q & 8) return 4; var c = q & 7; return c >= 5 ? 3 : c >= 3 ? 2 : c >= 1 ? 1 : 0; }
+
+  if (!("serial" in navigator)) {
+    $("nosupport").hidden = false;
+    $("howto").hidden = true;
+    $("connect").disabled = true;
+  }
+
+  var port = null, reader = null, writer = null, closing = false;
+  var waiters = [];             // collectors for command replies
+
+  // ---- the log ------------------------------------------------------------
+  var logEl = $("log"), logLines = 0;
+  function logLine(text, cls) {
+    var stick = logEl.scrollTop + logEl.clientHeight >= logEl.scrollHeight - 30;
+    var s = document.createElement("span");
+    if (!cls) {
+      if (/^OK\b/.test(text)) cls = "ok";
+      else if (/^ERR\b/.test(text)) cls = "err";
+      else if (/^\[[a-z0-9 ]+\]/.test(text)) cls = "tag";
+    }
+    if (cls) s.className = cls;
+    s.textContent = text + "\n";
+    logEl.appendChild(s);
+    if (++logLines > 1500) { logEl.removeChild(logEl.firstChild); logLines--; }
+    if (stick) logEl.scrollTop = logEl.scrollHeight;
+  }
+  $("clearLog").addEventListener("click", function () { logEl.textContent = ""; logLines = 0; });
+
+  // ---- serial -------------------------------------------------------------
+  function setConnected(on, word) {
+    $("dot").className = "dot" + (on ? " on" : "");
+    $("connword").textContent = word;
+    $("connect").hidden = on;
+    $("disconnect").hidden = !on;
+    $("page").classList.toggle("off", !on);
+  }
+
+  async function connect() {
+    try {
+      port = await navigator.serial.requestPort();
+      await port.open({ baudRate: 115200, bufferSize: 65536 });
+      // Both lines low: the badge's auto-reset circuit leaves it running.
+      try { await port.setSignals({ dataTerminalReady: false, requestToSend: false }); } catch (e) {}
+    } catch (e) {
+      if (e && e.name !== "NotFoundError") logLine("Could not open the port: " + e.message, "err");
+      port = null;
+      return;
+    }
+    closing = false;
+    writer = port.writable.getWriter();
+    setConnected(true, "connected");
+    logLine("-- connected", "me");
+    readLoop();
+    setTimeout(refreshAll, 300);
+  }
+
+  async function disconnect() {
+    closing = true;
+    try { if (reader) await reader.cancel(); } catch (e) {}
+    try { if (writer) { writer.releaseLock(); } } catch (e) {}
+    try { if (port) await port.close(); } catch (e) {}
+    port = reader = writer = null;
+    setConnected(false, "not connected");
+    logLine("-- disconnected", "me");
+  }
+
+  async function readLoop() {
+    var dec = new TextDecoder();
+    var buf = "";
+    while (port && port.readable && !closing) {
+      reader = port.readable.getReader();
+      try {
+        for (;;) {
+          var r = await reader.read();
+          if (r.done) break;
+          buf += dec.decode(r.value, { stream: true });
+          var i;
+          while ((i = buf.indexOf("\n")) >= 0) {
+            var line = buf.slice(0, i).replace(/\r$/, "");
+            buf = buf.slice(i + 1);
+            onLine(line);
+          }
+        }
+      } catch (e) {
+        if (!closing) logLine("-- read error: " + e.message, "err");
+      } finally {
+        try { reader.releaseLock(); } catch (e) {}
+      }
+      if (!closing) { await disconnect(); break; }
+    }
+  }
+
+  // SHOT's hex lines are many and long: they feed the screen, not the log.
+  var shotLines = 0;
+  function onLine(line) {
+    var quiet = shotLines > 0 && /^[PR] /.test(line);
+    for (var k = waiters.length - 1; k >= 0; k--) {
+      if (waiters[k].feed(line)) { /* consumed */ }
+    }
+    if (line === "SHOT BEGIN 240 240") shotLines = 1;
+    else if (line === "SHOT END") { shotLines = 0; logLine("SHOT END (shown above)", "tag"); return; }
+    if (quiet) { shotLines++; return; }
+    logLine(line);
+  }
+
+  function send(cmd, echo) {
+    if (!writer) return Promise.resolve();
+    if (echo !== false) logLine("> " + cmd, "me");
+    return writer.write(new TextEncoder().encode(cmd + "\n"));
+  }
+
+  // Send a command and gather its reply: the line `head` matches, then any
+  // lines after it that `more` accepts, until one that doesn't or 400 ms of
+  // quiet. Resolves with {head, lines}, or null after `timeout`.
+  function ask(cmd, head, more, timeout) {
+    return new Promise(function (resolve) {
+      var got = null, lines = [], idle = null;
+      var w = {
+        feed: function (line) {
+          if (!got) {
+            if (head.test(line)) { got = line; arm(); return true; }
+            if (/^ERR\b/.test(line) && line.indexOf(cmd.split(" ")[0]) >= 0) { finish({ head: line, lines: [], err: true }); }
+            return false;
+          }
+          if (more && more(line)) { lines.push(line); arm(); return true; }
+          finish({ head: got, lines: lines });
+          return false;
+        }
+      };
+      function arm() { clearTimeout(idle); idle = setTimeout(function () { finish({ head: got, lines: lines }); }, 400); }
+      function finish(v) {
+        clearTimeout(idle); clearTimeout(t);
+        var i = waiters.indexOf(w); if (i >= 0) waiters.splice(i, 1);
+        resolve(v);
+      }
+      var t = setTimeout(function () { finish(got ? { head: got, lines: lines } : null); }, timeout || 3000);
+      waiters.push(w);
+      send(cmd);
+    });
+  }
+
+  // ---- the screen -----------------------------------------------------------
+  var shooting = false;
+  function shot() {
+    if (!writer || shooting) return;
+    shooting = true;
+    $("shot").disabled = true;
+    var pal = [], runs = [];
+    var p = new Promise(function (resolve) {
+      var on = false;
+      var w = { feed: function (line) {
+        if (line === "SHOT BEGIN 240 240") { on = true; return true; }
+        if (/^ERR SHOT/.test(line)) { done(line); return true; }
+        if (!on) return false;
+        if (line.indexOf("P ") === 0) { var h = line.slice(2); for (var k = 0; k < h.length; k += 4) pal.push(parseInt(h.substr(k, 4), 16)); }
+        else if (line.indexOf("R ") === 0) { var r = line.slice(2); for (var j = 0; j < r.length; j += 4) runs.push(parseInt(r.substr(j, 2), 16), parseInt(r.substr(j + 2, 2), 16)); }
+        else if (line === "SHOT END") done(null);
+        return true;
+      } };
+      var t = setTimeout(function () { done("no picture came back"); }, 40000);
+      function done(err) { clearTimeout(t); var i = waiters.indexOf(w); if (i >= 0) waiters.splice(i, 1); resolve(err); }
+      waiters.push(w);
+    });
+    send("SHOT");
+    p.then(function (err) {
+      shooting = false;
+      $("shot").disabled = false;
+      if (err) { logLine(err, "err"); return; }
+      if (pal.length !== 256) { logLine("the picture came back incomplete", "err"); return; }
+      var cv = $("screen"), g = cv.getContext("2d"), img = g.createImageData(240, 240), d = img.data, at = 0;
+      for (var i = 0; i < runs.length; i += 2) {
+        var v = pal[runs[i]], n = runs[i + 1];
+        var R = ((v >> 11) & 31) * 255 / 31, G = ((v >> 5) & 63) * 255 / 63, B = (v & 31) * 255 / 31;
+        for (var k = 0; k < n && at < 57600; k++, at++) { d[at * 4] = R; d[at * 4 + 1] = G; d[at * 4 + 2] = B; d[at * 4 + 3] = 255; }
+      }
+      g.putImageData(img, 0, 0);
+      $("screenIdle").hidden = true;
+    });
+  }
+  $("shot").addEventListener("click", shot);
+
+  var shotTimer = null;
+  function press(k) {
+    send("KEY " + k);
+    if ($("autoShot").checked) { clearTimeout(shotTimer); shotTimer = setTimeout(shot, 700); }
+  }
+  document.querySelectorAll("[data-key]").forEach(function (b) {
+    b.addEventListener("click", function () { press(b.getAttribute("data-key")); });
+  });
+  document.addEventListener("keydown", function (e) {
+    if (!writer || e.target.closest("input, select, textarea")) return;
+    var k = { ArrowUp: "U", ArrowDown: "D", Enter: "S", Backspace: "L", b: "B", B: "B" }[e.key];
+    if (k) { e.preventDefault(); press(k); }
+  });
+  $("go").addEventListener("click", function () {
+    send("GO " + $("mode").value);
+    if ($("autoShot").checked) { clearTimeout(shotTimer); shotTimer = setTimeout(shot, 1500); }
+  });
+
+  // ---- the badge ------------------------------------------------------------
+  function say(id, text, good) { var m = $(id); m.textContent = text; m.className = "msg " + (good ? "good" : "bad"); }
+
+  async function readWho() {
+    var r = await ask("WHO", /^OK NAME .* WIFI .* FW /);
+    if (!r || r.err) return;
+    var m = /^OK NAME (.*) WIFI (.*) FW (.*)$/.exec(r.head);
+    if (!m) return;
+    $("fName").textContent = m[1]; $("fWifi").textContent = m[2]; $("fFw").textContent = m[3];
+    if (!$("name").value) $("name").value = m[1];
+  }
+
+  async function readCtf() {
+    var r = await ask("CTF BOARD", /^OK CTF /, function (l) { return /^ {2}/.test(l) || /^OK BOARD /.test(l); }, 4000);
+    if (!r || r.err) return;
+    var m = /^OK CTF (\d+) points, (\d+) of (\d+) flags/.exec(r.head);
+    if (m) { $("cScore").textContent = m[1]; $("cFlags").textContent = "points · " + m[2] + " of " + m[3] + " flags"; }
+    var fl = $("flagList"); fl.innerHTML = "";
+    var rows = [], phone = null, inBoard = false;
+    r.lines.forEach(function (l) {
+      if (/^OK BOARD /.test(l)) { inBoard = true; return; }
+      var f = /^ {2}([+-]) (.+?)\s+(\d+)$/.exec(l);
+      if (!inBoard && f) {
+        var li = document.createElement("li");
+        if (f[1] === "+") li.className = "on";
+        var a = document.createElement("span"); a.textContent = FLAG_NAMES[f[2].trim()] || f[2].trim();
+        var b = document.createElement("span"); b.textContent = f[3];
+        li.appendChild(a); li.appendChild(b); fl.appendChild(li);
+        return;
+      }
+      var ph = /^ {2}phone board: (\S+)/.exec(l);
+      if (ph) { phone = ph[1]; return; }
+      var b2 = /^ {2}\s*(\d+) (.{8}) +(\d+) ([0-9a-f]{4}) (?:([0-9a-f]{2}) )?([0-9a-f]{8})( \*)?$/.exec(l);
+      if (inBoard && b2) rows.push({ rank: b2[1], name: b2[2].trim(), score: b2[3], team: (parseInt(b2[4], 16) >> 12) & 7,
+        quest: b2[5] ? parseInt(b2[5], 16) : 0, me: !!b2[7] });
+    });
+    var tb = $("board"); tb.innerHTML = "";
+    if (!rows.length) { tb.innerHTML = '<tr><td colspan="4" class="empty">Open the CTF on the badge near other badges to fill it.</td></tr>'; }
+    rows.forEach(function (x) {
+      var tr = document.createElement("tr"); if (x.me) tr.className = "me";
+      [x.rank, x.name + (x.quest ? " · " + RANKS[rankOf(x.quest)] : ""), TEAMS[x.team] || "–", x.score].forEach(function (v, i) {
+        var td = document.createElement("td"); td.textContent = v; if (i === 0 || i === 3) td.className = "n"; tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    if (phone) {
+      // The same link the badge's SCAN ME code carries, opened here: it lands
+      // on this site's board page, so a relative link keeps it on this host.
+      var hash = phone.slice(phone.indexOf("#"));
+      $("phoneLink").href = "board/" + hash;
+      $("phoneRow").hidden = false;
+    }
+  }
+
+  async function refreshAll() { await readWho(); await readCtf(); shot(); }
+  $("refresh").addEventListener("click", readWho);
+  $("ctfRefresh").addEventListener("click", readCtf);
+
+  $("setName").addEventListener("click", async function () {
+    var v = $("name").value.trim();
+    if (!v) return say("badgeMsg", "Type a name first.", false);
+    var r = await ask("NAME " + v, /^(OK|ERR) NAME/);
+    if (!r) return say("badgeMsg", "The badge didn't answer. Firmware 1.0.51 or newer has NAME.", false);
+    if (r.err || /^ERR/.test(r.head)) return say("badgeMsg", r.head.replace(/^ERR NAME /, ""), false);
+    say("badgeMsg", "Name set: " + r.head.slice(8), true);
+    readWho();
+  });
+  $("setCard").addEventListener("click", async function () {
+    var v = $("card").value.trim();
+    var r = await ask(v ? "CARD " + v : "CARD CLEAR", /^OK CARD/);
+    if (!r) return say("badgeMsg", "The badge didn't answer.", false);
+    say("badgeMsg", v ? "Card set." : "Card cleared.", true);
+  });
+  $("setWifi").addEventListener("click", async function () {
+    var s = $("ssid").value.trim();
+    if (!s) return say("wifiMsg", "Type the network name first.", false);
+    await send("SETWIFI " + s + "\t" + $("pass").value, false);
+    logLine("> SETWIFI " + s + " (password not shown)", "me");
+    $("pass").value = "";
+    say("wifiMsg", "Saved to the badge. It joins next time it uses Wi-Fi.", true);
+    setTimeout(readWho, 800);
+  });
+  $("checkUpdate").addEventListener("click", function () {
+    send("OTACHECK");
+    say("wifiMsg", "Checking. The log below says what it finds.", true);
+  });
+  $("submitCode").addEventListener("click", async function () {
+    var v = $("code").value.trim().toUpperCase();
+    if (v.length !== 8) return say("ctfMsg", "Codes are 8 characters.", false);
+    var r = await ask("FLAG " + v, /^(OK|ERR) FLAG/);
+    if (!r) return say("ctfMsg", "The badge didn't answer.", false);
+    if (/^OK FLAG already/.test(r.head)) say("ctfMsg", "You already have that one.", false);
+    else if (/^OK/.test(r.head)) { say("ctfMsg", "Flag! " + r.head.slice(8), true); $("code").value = ""; readCtf(); }
+    else say("ctfMsg", "That code opens nothing on this badge.", false);
+  });
+
+  $("cmdForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    var v = $("cmd").value.trim();
+    if (v) send(v);
+    $("cmd").value = "";
+  });
+
+  $("connect").addEventListener("click", connect);
+  $("disconnect").addEventListener("click", disconnect);
+  if ("serial" in navigator) {
+    navigator.serial.addEventListener("disconnect", function (e) { if (port && e.target === port) disconnect(); });
+  }
+})();
+</script>
+</body>
+</html>

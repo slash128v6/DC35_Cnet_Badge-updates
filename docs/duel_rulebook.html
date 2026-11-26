@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Duel Rulebook</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #eef1f4;
+    --surface: #ffffff;
+    --ink: #14202e;
+    --muted: #566472;
+    --rule: #cad3dd;
+    --accent: #1f5fa8;
+    --go: #17864a;
+    --stop: #c9342a;
+    --warn: #b26f00;
+    --hold: #1f4fd1;
+    --shadow: 0 1px 2px rgba(20, 32, 46, .06), 0 6px 18px rgba(20, 32, 46, .06);
+
+    --display: "Big Shoulders Display", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f161e;
+      --surface: #17212c;
+      --ink: #e3e9ef;
+      --muted: #93a2b1;
+      --rule: #2a3846;
+      --accent: #74a9e8;
+      --go: #4cc47f;
+      --stop: #f07163;
+      --warn: #e5a53a;
+      --hold: #6f8ff5;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f161e;
+    --surface: #17212c;
+    --ink: #e3e9ef;
+    --muted: #93a2b1;
+    --rule: #2a3846;
+    --accent: #74a9e8;
+    --go: #4cc47f;
+    --stop: #f07163;
+    --warn: #e5a53a;
+    --hold: #6f8ff5;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 22px rgba(0, 0, 0, .25);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 17px/1.6 var(--body);
+  }
+  .page {
+    max-width: 58rem;
+    margin: 0 auto;
+    padding: 3.5rem 1.25rem 5rem;
+    display: grid;
+    gap: 3.5rem;
+  }
+  .prose { max-width: 66ch; }
+  .prose > * + * { margin-top: .9rem; }
+  h1, h2, h3 { margin: 0; text-wrap: balance; }
+  p, ul, ol, table { margin: 0; }
+
+  .eyebrow {
+    font: 500 .72rem/1 var(--mono);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  h1 {
+    font: 800 clamp(3.4rem, 9vw, 5.6rem)/.9 var(--display);
+    letter-spacing: .01em;
+    text-transform: uppercase;
+  }
+  h2 {
+    font: 700 2.1rem/1 var(--display);
+    text-transform: uppercase;
+    letter-spacing: .02em;
+  }
+  h3 { font: 700 1.05rem/1.3 var(--body); }
+  code, .mono { font-family: var(--mono); font-size: .88em; }
+  strong { font-weight: 700; }
+  a { color: var(--accent); }
+  a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  header.masthead { display: grid; gap: 1.1rem; }
+  .lede { font-size: 1.28rem; line-height: 1.45; max-width: 36ch; text-wrap: balance; }
+  .status {
+    display: flex; flex-wrap: wrap; gap: .5rem 1.25rem;
+    font: .8rem/1.4 var(--mono); color: var(--muted);
+    padding-top: .25rem;
+  }
+  .status span b { color: var(--ink); font-weight: 500; }
+
+  section { display: grid; gap: 1.4rem; }
+  .section-head { display: grid; gap: .5rem; }
+
+  /* ---- setup steps ---- */
+  ol.steps { padding: 0; list-style: none; counter-reset: s; display: grid; gap: .9rem; }
+  ol.steps li { counter-increment: s; display: grid; grid-template-columns: 2rem 1fr; gap: .75rem; }
+  ol.steps li::before {
+    content: counter(s);
+    font: 800 1.5rem/1.1 var(--display); color: var(--accent);
+  }
+  ol.steps li p { color: var(--muted); font-size: .95rem; }
+
+  /* ---- round timeline ---- */
+  .timeline-wrap { overflow-x: auto; }
+  .timeline {
+    display: grid;
+    grid-template-columns: 2.6fr 3fr 3.4fr 2.6fr;
+    gap: 4px;
+    min-width: 40rem;
+  }
+  .phase {
+    padding: .9rem .9rem 1rem;
+    display: grid;
+    align-content: start;
+    gap: .35rem;
+    border-top: 5px solid var(--c);
+    background: var(--surface);
+  }
+  .phase:first-child { border-radius: 6px 0 0 6px; }
+  .phase:last-child { border-radius: 0 6px 6px 0; }
+  .phase .name { font: 800 1.5rem/1 var(--display); letter-spacing: .03em; color: var(--c); }
+  .phase .dur { font: 500 .8rem/1.2 var(--mono); color: var(--ink); font-variant-numeric: tabular-nums; }
+  .phase .what { font-size: .88rem; line-height: 1.45; color: var(--muted); }
+  .p-idle { --c: var(--muted); }
+  .p-warn { --c: var(--warn); }
+  .p-hold { --c: var(--hold); }
+  .p-go { --c: var(--go); }
+  .outcomes { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.25rem; }
+  .knows { background: var(--surface); border-radius: 8px; padding: 1.2rem 1.25rem; display: grid; gap: .5rem; align-content: start; }
+  .knows .who { font: 500 .72rem/1 var(--mono); letter-spacing: .12em; text-transform: uppercase; }
+  .knows .who.go { color: var(--go); }
+  .knows .who.stop { color: var(--stop); }
+  .knows .who.warn { color: var(--warn); }
+  .knows p { font-size: .95rem; color: var(--muted); }
+
+  /* ---- the fairness rules ---- */
+  .rules { display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); gap: 1.25rem; }
+  .rule { border-left: 3px solid var(--accent); padding: .1rem 0 .1rem 1rem; display: grid; gap: .35rem; align-content: start; }
+  .rule p { color: var(--muted); font-size: .95rem; }
+
+  /* ---- screen mocks ---- */
+  .screens {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+    gap: 1.25rem;
+  }
+  figure { margin: 0; display: grid; gap: .6rem; align-content: start; }
+  .bezel {
+    background: #05090a;
+    border-radius: 50%;
+    padding: 10px;
+    box-shadow: var(--shadow);
+    max-width: 18rem;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .bezel svg { display: block; width: 100%; height: auto; border-radius: 50%; }
+  figcaption { font-size: .9rem; line-height: 1.45; color: var(--muted); }
+  figcaption b { color: var(--ink); }
+
+  /* ---- ring legend ---- */
+  .ring-list { list-style: none; padding: 0; display: grid; gap: 0; }
+  .ring-list li {
+    display: grid; grid-template-columns: 2.6rem 8.5rem 1fr; gap: 1rem; align-items: center;
+    padding: .7rem 0; border-top: 1px solid var(--rule);
+  }
+  .ring-list li:last-child { border-bottom: 1px solid var(--rule); }
+  .ring-list .when { font: 500 .8rem/1.3 var(--mono); }
+  .ring-list .desc { font-size: .95rem; color: var(--muted); }
+  .dot {
+    width: 2.1rem; height: 2.1rem; border-radius: 50%;
+    background: var(--s1);
+    box-shadow: inset 0 0 0 5px #05090a, 0 0 0 1px var(--rule);
+  }
+  .r-wait   { background: conic-gradient(#4a4a55 0 15deg, #14141a 15deg 360deg); animation: spin 2.9s steps(24) infinite; }
+  .r-ready  { --s1: #b07000; animation: breathe 4.4s ease-in-out infinite; }
+  .r-steady { animation: amber .4s steps(1) infinite; }
+  .r-hold   { --s1: #0028b4; }
+  .r-win    { background: conic-gradient(#ff0040, #ffb000, #40ff40, #00c0ff, #8040ff, #ff0040); animation: spin 2s linear infinite; }
+  .r-lose   { animation: red .5s steps(1) infinite; }
+  @keyframes breathe { 50% { filter: brightness(.55); } }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  @keyframes amber { 0% { background: #ff7800; } 50% { background: #140800; } }
+  @keyframes red { 0% { background: #960000; } 50% { background: #200000; } }
+  @media (max-width: 34rem) {
+    .ring-list li { grid-template-columns: 2.6rem 1fr; }
+    .ring-list .desc { grid-column: 2; }
+  }
+
+  /* ---- controls ---- */
+  dl.spec { display: grid; grid-template-columns: max-content 1fr; gap: .55rem 1.5rem; margin: 0; }
+  dl.spec dt { font: 500 .85rem/1.6 var(--mono); color: var(--ink); white-space: nowrap; }
+  dl.spec dd { margin: 0; color: var(--muted); font-size: .95rem; }
+  @media (max-width: 34rem) {
+    dl.spec { grid-template-columns: 1fr; gap: .1rem; }
+    dl.spec dd { margin-bottom: .6rem; }
+  }
+
+  /* ---- limitations ---- */
+  .gaps { list-style: none; padding: 0; display: grid; gap: .9rem; }
+  .gaps li { display: grid; gap: .2rem; padding-left: 1rem; border-left: 3px solid var(--rule); }
+  .gaps li.serious { border-left-color: var(--warn); }
+  .gaps li p { color: var(--muted); font-size: .95rem; }
+
+  footer { font: .78rem/1.6 var(--mono); color: var(--muted); border-top: 1px solid var(--rule); padding-top: 1.2rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .dot { animation: none !important; }
+  }
+</style>
+
+<main class="page">
+
+  <header class="masthead">
+    <div class="eyebrow">DC35 mmWave radar badge · game rules</div>
+    <h1>Duel</h1>
+    <p class="lede">A standoff for two badges and two players. The badges count you in, both rings go blue, and the first one to move loses.</p>
+    <div class="status">
+      <span>menu <b>Duel</b></span>
+      <span>badges <b>2</b></span>
+      <span>apart <b>2&ndash;4 m</b></span>
+      <span>radio <b>badge to badge</b></span>
+      <span>sound <b>optional</b></span>
+      <span>firmware <b>1.0.44</b></span>
+      <span>board <b>rev F</b></span>
+      <span>as of <b>23 Nov 2026</b></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">The idea</div>
+      <h2>Your badge judges them</h2>
+    </div>
+    <div class="prose">
+      <p>Two players face each other, each with a badge pointed at the other player. When both are set, the badges agree a countdown between themselves. Then both rings turn solid blue and nobody may move. It can last two seconds or two minutes: there is no time limit, only nerve.</p>
+      <p><strong>Each badge watches the person opposite, never its own player.</strong> The badge can't feel itself move; what its radar sees is the other player. So the call is always made by your opponent's equipment, and no badge ever declares its own player the loser. The badge that sees the move tells the other one, and both show the result.</p>
+      <p>Duel needs two badges. With one, the <a href="sneak_rulebook.html">Sneak rulebook</a> has the game for a whole room.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Before the first round</div>
+      <h2>Setting up</h2>
+    </div>
+    <ol class="steps prose">
+      <li><div><h3>Both players pick <span class="mono">Games → Duel</span>.</h3><p>Until it hears the other badge, the screen says <span class="mono">no other badge yet</span>. Then it shows <span class="mono">finding</span> and the other badge's name, and once the two have picked each other, <span class="mono">vs</span> and the name. Check it's the badge you meant to play. No Wi-Fi needed: the badges talk directly to each other.</p></div></li>
+      <li><div><h3>Stand 2 to 4 metres apart, facing each other.</h3><p>Each badge ignores anyone further than 5&nbsp;m, and sees 60° either side of straight ahead. Closer than about 2&nbsp;m, a small lean is a big move to the radar.</p></div></li>
+      <li><div><h3>Aim your badge at the other player, and keep it still.</h3><p>Best of all, stand each badge upright on a table, chair or stand just in front of its player, facing the opponent. If you hold it, hold it flat against your chest with both hands. A badge swinging on a lanyard is not fair play &mdash; see <a href="#fair">Fair play</a>.</p></div></li>
+      <li><div><h3>Clear the space between you.</h3><p>Spectators stand behind the players or well off to the side, not in between.</p></div></li>
+      <li><div><h3>Press SELECT, or touch the bullseye, when you're set.</h3><p>The screen says <span class="mono">you are set</span>. Press again to take it back. The round starts the moment both players are set.</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">One round</div>
+      <h2>Ready, steady, hold</h2>
+      <p>The countdown is a different random length every time, so nobody can time the go. The flashing speeds up as it gets close, so the go is never a shock &mdash; only exactly when it lands.</p>
+    </div>
+
+    <div class="timeline-wrap">
+      <div class="timeline" role="list">
+        <div class="phase p-idle" role="listitem">
+          <div class="name">Ready</div>
+          <div class="dur">until both are set</div>
+          <div class="what">Amber, breathing. Aim, settle, press SELECT. <em>A tick when the other badge turns up.</em></div>
+        </div>
+        <div class="phase p-warn" role="listitem">
+          <div class="name">Steady</div>
+          <div class="dur">2&ndash;5 s, random</div>
+          <div class="what">Amber flashing, faster and faster. Don't move yet: moving now is a false start, and loses. <em>A tick.</em></div>
+        </div>
+        <div class="phase p-hold" role="listitem">
+          <div class="name">Hold</div>
+          <div class="dur">until someone moves</div>
+          <div class="what">Solid blue. Stay still. Breathing and a little sway are fine. <em>One high note.</em></div>
+        </div>
+        <div class="phase p-go" role="listitem">
+          <div class="name">Result</div>
+          <div class="dur">6 s</div>
+          <div class="what">Winner rainbow, loser flashing red. Then back to Ready; SELECT skips the wait.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="outcomes">
+      <div class="knows">
+        <div class="who go">You win</div>
+        <h3>They moved first</h3>
+        <p>A rising fanfare and a rainbow ring. The screen says <span class="mono">they moved first</span>, or <span class="mono">they went early!</span> for a false start, and how many seconds into the phase it happened.</p>
+      </div>
+      <div class="knows">
+        <div class="who stop">You lose</div>
+        <h3>You moved first</h3>
+        <p>Three falling notes and a flashing red ring: <span class="mono">you moved first</span>, or <span class="mono">you went early</span>. Your opponent's badge saw it, and yours takes its word.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">The fine print</div>
+      <h2>What counts as moving</h2>
+    </div>
+    <div class="prose">
+      <p><strong>About 20 cm, or any brisk move.</strong> When Hold starts, each badge notes where its opponent is. Stray 20&nbsp;cm from that spot for 0.15&nbsp;s and that's a move. The radar also feels speed, so a step, a lean or a reach counts the moment it starts, without waiting for the distance; anything over about 30&nbsp;cm/s for 0.15&nbsp;s is moving. Breathing and sway sit well under both.</p>
+      <p><strong>The countdown counts too.</strong> Steady is watched exactly like Hold, from the spot you were in when it started. Moving during it is a false start and loses just the same.</p>
+      <p><strong>Vanishing is not moving.</strong> Stand still enough and the radar loses sight of you altogether, which is precisely what the game asks for. The screen opposite then says <span class="mono">cannot see them</span>, and you are still in. But a step and then a freeze is a move: vanish after straying the 20&nbsp;cm and you've lost.</p>
+      <p><strong>Stepping out of view and back gets you nothing.</strong> The badge keeps the spot it first noted and measures your return against it.</p>
+      <p><strong>The time on the result</strong> is how far into the phase the move came: <span class="mono">after 7.4s</span> on a Hold, or a fraction of a second on a twitchy false start.</p>
+      <p><strong>Two rainbows means a draw.</strong> If you both move at the same instant, each badge can see the other move first, and both claim the win. Call it a draw and go again.</p>
+    </div>
+  </section>
+
+  <section id="fair">
+    <div class="section-head prose">
+      <div class="eyebrow">Fair play</div>
+      <h2>Two rules the radar can't enforce</h2>
+      <p>The badge measures where the person in front of it is, compared with where the badge is pointing. Two things can fool that, and both are house rules.</p>
+    </div>
+    <div class="rules">
+      <div class="rule">
+        <h3>The badges hold still too</h3>
+        <p>Turn a badge and the person in front of it seems to move. At 3&nbsp;m, a 4° turn shifts them sideways by 20&nbsp;cm &mdash; the whole threshold. So a badge that swings or twists can hand its own player a win they didn't earn. Stand the badges on something, or hold them flat against your chest. Twisting your badge on purpose loses the round.</p>
+      </div>
+      <div class="rule">
+        <h3>Nobody walks between you</h3>
+        <p>Each badge judges the <em>nearest</em> person in front of it. Someone who steps between the players, or closer to a badge than its opponent, becomes the person it's judging, and their walking past is a move. Spectators behind the players or well to the side. If someone walks through, replay the round.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">What the screen shows</div>
+      <h2>Your view</h2>
+      <p>The screen faces you, the player holding or standing behind the badge. The radar's fan opens upward from the bottom of the circle: its ±60° view, with arcs 1.5&nbsp;m apart out to 6&nbsp;m. The dots round the rim mirror the 24 LEDs on the front.</p>
+    </div>
+
+    <div class="screens">
+      <figure>
+        <div class="bezel">
+          <svg viewBox="0 0 240 240" role="img" aria-label="Duel ready: amber, the opponent's badge code shown, and you are set in green">
+            <circle cx="120" cy="120" r="120" fill="#000"/>
+            <g fill="none" stroke="#004000">
+              <path d="M95.8,170 A28,28 0 0 1 144.2,170"/>
+              <path d="M71.5,156 A56,56 0 0 1 168.5,156"/>
+              <path d="M47.3,142 A84,84 0 0 1 192.7,142"/>
+            </g>
+            <g fill="none" stroke="#008000">
+              <path d="M120,184 L23,128 A112,112 0 0 1 217,128 Z"/>
+              <line x1="120" y1="72" x2="120" y2="78"/>
+            </g>
+            <circle cx="120" cy="184" r="2" fill="#008000"/>
+            <circle cx="123" cy="128" r="4" fill="#848484"/>
+            <g fill="#6b4200"><circle cx="120.0" cy="6.0" r="3"/><circle cx="149.5" cy="9.9" r="3"/><circle cx="177.0" cy="21.3" r="3"/><circle cx="200.6" cy="39.4" r="3"/><circle cx="218.7" cy="63.0" r="3"/><circle cx="230.1" cy="90.5" r="3"/><circle cx="234.0" cy="120.0" r="3"/><circle cx="230.1" cy="149.5" r="3"/><circle cx="218.7" cy="177.0" r="3"/><circle cx="200.6" cy="200.6" r="3"/><circle cx="177.0" cy="218.7" r="3"/><circle cx="149.5" cy="230.1" r="3"/><circle cx="120.0" cy="234.0" r="3"/><circle cx="90.5" cy="230.1" r="3"/><circle cx="63.0" cy="218.7" r="3"/><circle cx="39.4" cy="200.6" r="3"/><circle cx="21.3" cy="177.0" r="3"/><circle cx="9.9" cy="149.5" r="3"/><circle cx="6.0" cy="120.0" r="3"/><circle cx="9.9" cy="90.5" r="3"/><circle cx="21.3" cy="63.0" r="3"/><circle cx="39.4" cy="39.4" r="3"/><circle cx="63.0" cy="21.3" r="3"/><circle cx="90.5" cy="9.9" r="3"/></g>
+            <g font-family="IBM Plex Mono, Consolas, monospace" text-anchor="middle">
+              <text x="120" y="34" font-size="26" font-weight="500" fill="#ffa400">DUEL</text>
+              <text x="120" y="60" font-size="17" font-weight="500" fill="#ffa400">ready</text>
+              <text x="120" y="196" font-size="9.5" fill="#e6e6e6">vs CADGE</text>
+              <text x="120" y="208" font-size="9.5" fill="#00e63c">you are set</text>
+              <text x="120" y="220" font-size="9.5" fill="#848484">point it at them</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><b>Ready.</b> Paired with the badge called CADGE, and you've pressed SELECT. The round starts as soon as they press theirs. Once either badge has had an SAO plugged in, the last line shows both teams instead, such as <span class="mono">STAR vs CIRCLE</span>.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="bezel">
+          <svg viewBox="0 0 240 240" role="img" aria-label="Duel hold: solid blue, the opponent marked in cyan, and how far they have strayed: 40 of 200 millimetres">
+            <circle cx="120" cy="120" r="120" fill="#000"/>
+            <g fill="none" stroke="#004000">
+              <path d="M95.8,170 A28,28 0 0 1 144.2,170"/>
+              <path d="M71.5,156 A56,56 0 0 1 168.5,156"/>
+              <path d="M47.3,142 A84,84 0 0 1 192.7,142"/>
+            </g>
+            <g fill="none" stroke="#008000">
+              <path d="M120,184 L23,128 A112,112 0 0 1 217,128 Z"/>
+              <line x1="120" y1="72" x2="120" y2="78"/>
+            </g>
+            <circle cx="120" cy="184" r="2" fill="#008000"/>
+            <circle cx="122" cy="129" r="9" fill="none" stroke="#0a4a52" stroke-width="1"/>
+            <circle cx="124" cy="127" r="4.5" fill="#00d2e6"/>
+            <g fill="#0028b4"><circle cx="120.0" cy="6.0" r="3"/><circle cx="149.5" cy="9.9" r="3"/><circle cx="177.0" cy="21.3" r="3"/><circle cx="200.6" cy="39.4" r="3"/><circle cx="218.7" cy="63.0" r="3"/><circle cx="230.1" cy="90.5" r="3"/><circle cx="234.0" cy="120.0" r="3"/><circle cx="230.1" cy="149.5" r="3"/><circle cx="218.7" cy="177.0" r="3"/><circle cx="200.6" cy="200.6" r="3"/><circle cx="177.0" cy="218.7" r="3"/><circle cx="149.5" cy="230.1" r="3"/><circle cx="120.0" cy="234.0" r="3"/><circle cx="90.5" cy="230.1" r="3"/><circle cx="63.0" cy="218.7" r="3"/><circle cx="39.4" cy="200.6" r="3"/><circle cx="21.3" cy="177.0" r="3"/><circle cx="9.9" cy="149.5" r="3"/><circle cx="6.0" cy="120.0" r="3"/><circle cx="9.9" cy="90.5" r="3"/><circle cx="21.3" cy="63.0" r="3"/><circle cx="39.4" cy="39.4" r="3"/><circle cx="63.0" cy="21.3" r="3"/><circle cx="90.5" cy="9.9" r="3"/></g>
+            <g font-family="IBM Plex Mono, Consolas, monospace" text-anchor="middle">
+              <text x="120" y="34" font-size="26" font-weight="500" fill="#00d2e6">DUEL</text>
+              <text x="120" y="60" font-size="17" font-weight="500" fill="#00d2e6">HOLD</text>
+              <text x="120" y="196" font-size="9.5" fill="#00d2e6">HOLD STILL</text>
+              <text x="120" y="208" font-size="9.5" fill="#848484">them: 40 mm of 200</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><b>Hold.</b> Your opponent, 3&nbsp;m away, has drifted 40&nbsp;mm from where they stood at the go. At 200 they lose.</figcaption>
+      </figure>
+
+      <figure>
+        <div class="bezel">
+          <svg viewBox="0 0 240 240" role="img" aria-label="Duel won: green you win, they moved first, after 7.4 seconds, with a rainbow rim">
+            <circle cx="120" cy="120" r="120" fill="#000"/>
+            <g fill="none" stroke="#004000">
+              <path d="M95.8,170 A28,28 0 0 1 144.2,170"/>
+              <path d="M71.5,156 A56,56 0 0 1 168.5,156"/>
+              <path d="M47.3,142 A84,84 0 0 1 192.7,142"/>
+            </g>
+            <g fill="none" stroke="#008000">
+              <path d="M120,184 L23,128 A112,112 0 0 1 217,128 Z"/>
+              <line x1="120" y1="72" x2="120" y2="78"/>
+            </g>
+            <circle cx="120" cy="184" r="2" fill="#008000"/>
+            <circle cx="141" cy="121" r="4" fill="#848484"/>
+            <circle cx="120.0" cy="6.0" r="3" fill="hsl(0,100%,55%)"/><circle cx="149.5" cy="9.9" r="3" fill="hsl(15,100%,55%)"/><circle cx="177.0" cy="21.3" r="3" fill="hsl(30,100%,55%)"/><circle cx="200.6" cy="39.4" r="3" fill="hsl(45,100%,55%)"/><circle cx="218.7" cy="63.0" r="3" fill="hsl(60,100%,55%)"/><circle cx="230.1" cy="90.5" r="3" fill="hsl(75,100%,55%)"/><circle cx="234.0" cy="120.0" r="3" fill="hsl(90,100%,55%)"/><circle cx="230.1" cy="149.5" r="3" fill="hsl(105,100%,55%)"/><circle cx="218.7" cy="177.0" r="3" fill="hsl(120,100%,55%)"/><circle cx="200.6" cy="200.6" r="3" fill="hsl(135,100%,55%)"/><circle cx="177.0" cy="218.7" r="3" fill="hsl(150,100%,55%)"/><circle cx="149.5" cy="230.1" r="3" fill="hsl(165,100%,55%)"/><circle cx="120.0" cy="234.0" r="3" fill="hsl(180,100%,55%)"/><circle cx="90.5" cy="230.1" r="3" fill="hsl(195,100%,55%)"/><circle cx="63.0" cy="218.7" r="3" fill="hsl(210,100%,55%)"/><circle cx="39.4" cy="200.6" r="3" fill="hsl(225,100%,55%)"/><circle cx="21.3" cy="177.0" r="3" fill="hsl(240,100%,60%)"/><circle cx="9.9" cy="149.5" r="3" fill="hsl(255,100%,62%)"/><circle cx="6.0" cy="120.0" r="3" fill="hsl(270,100%,62%)"/><circle cx="9.9" cy="90.5" r="3" fill="hsl(285,100%,60%)"/><circle cx="21.3" cy="63.0" r="3" fill="hsl(300,100%,55%)"/><circle cx="39.4" cy="39.4" r="3" fill="hsl(315,100%,55%)"/><circle cx="63.0" cy="21.3" r="3" fill="hsl(330,100%,55%)"/><circle cx="90.5" cy="9.9" r="3" fill="hsl(345,100%,55%)"/>
+            <g font-family="IBM Plex Mono, Consolas, monospace" text-anchor="middle">
+              <text x="120" y="34" font-size="26" font-weight="500" fill="#00e63c">DUEL</text>
+              <text x="120" y="60" font-size="17" font-weight="500" fill="#00e63c">YOU WIN</text>
+              <text x="120" y="196" font-size="9.5" fill="#00e63c">they moved first</text>
+              <text x="120" y="208" font-size="9.5" fill="#ffffff">after 7.4s</text>
+              <text x="120" y="220" font-size="9.5" fill="#848484">SEL for another</text>
+            </g>
+          </svg>
+        </div>
+        <figcaption><b>You win.</b> They lasted 7.4 seconds of Hold, then stepped right. The result stays for six seconds, or SELECT skips back to Ready for the next one.</figcaption>
+      </figure>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Across the room</div>
+      <h2>The ring is the referee</h2>
+      <p>Both rings always show the same phase, so each player can see where the round is from their opponent's badge, and so can anyone watching. It never shows anything subtle: a flickering light at the edge of your eye is exactly what makes people twitch, so during Hold it is plain solid blue.</p>
+    </div>
+
+    <ul class="ring-list">
+      <li><span class="dot r-wait" aria-hidden="true"></span><span class="when">Waiting</span><span class="desc">Dim, with one dot creeping round. No other badge in Duel yet.</span></li>
+      <li><span class="dot r-ready" aria-hidden="true"></span><span class="when">Ready</span><span class="desc">Amber, breathing. Both badges see each other; waiting for both players to press SELECT.</span></li>
+      <li><span class="dot r-steady" aria-hidden="true"></span><span class="when">Steady</span><span class="desc">Amber flashing, speeding up as the go gets close. Don't move.</span></li>
+      <li><span class="dot r-hold" aria-hidden="true"></span><span class="when">Hold</span><span class="desc">Solid blue. First to move loses.</span></li>
+      <li><span class="dot r-win" aria-hidden="true"></span><span class="when">Won</span><span class="desc">Rainbow, on the winner's badge.</span></li>
+      <li><span class="dot r-lose" aria-hidden="true"></span><span class="when">Lost</span><span class="desc">Flashing red, on the loser's badge.</span></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">With a piezo fitted</div>
+      <h2>Listen, too</h2>
+      <p>The go is the moment that matters, and you are looking at your opponent, not a light. So it has a sound of its own.</p>
+    </div>
+
+    <dl class="spec">
+      <dt>Ready</dt><dd>A short tick: the other badge has turned up.</dd>
+      <dt>Steady</dt><dd>A short tick: the countdown has started.</dd>
+      <dt>Hold</dt><dd>One high note. Freeze.</dd>
+      <dt>Won</dt><dd>A rising four-note fanfare.</dd>
+      <dt>Lost</dt><dd>Three falling notes.</dd>
+    </dl>
+
+    <div class="prose">
+      <p>Rev F boards have no piezo; one is added by hand on the Dev Module's <span class="mono">D32</span> pin, and later boards have it built in. Without one the game is the same, just silent. <strong>Settings &rarr; Sound</strong> turns it off.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Controls</div>
+      <h2>Buttons and the pad</h2>
+      <p>The three buttons are on the back, under the screen: UP, DOWN, SELECT from left to right as you look at the screen. The touch pad is on the front, across the mantle.</p>
+    </div>
+    <dl class="spec">
+      <dt>SELECT or the bullseye</dt><dd>Set, or not set again, while waiting. After a result, skip back to Ready for the next duel, where both players set again. During Steady and Hold it does nothing &mdash; and reaching for it is a move.</dd>
+      <dt>SELECT &mdash; hold 0.7 s</dt><dd>Back to the menu, at any point.</dd>
+      <dt>BOOT &mdash; short press</dt><dd>Back to the menu. BOOT is the small button on the ESP32 Dev Module itself.</dd>
+      <dt>BOOT &mdash; hold 0.8 s</dt><dd>Flip the screen upside down.</dd>
+    </dl>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">The radio</div>
+      <h2>Badge to badge</h2>
+    </div>
+    <div class="prose">
+      <p>The badges talk directly over ESP-NOW, the ESP32's own short-range radio, with a shared key that keeps stray traffic out. No Wi-Fi network and no phone: badges in Duel within a few tens of metres find each other.</p>
+      <p><strong>Each badge picks one opponent, and a duel needs both to agree.</strong> A badge picks a badge that has picked it, or failing that the strongest signal, which is usually the one it's facing. The round starts only once the two have picked each other, and from then on each listens to its opponent alone. A badge waiting its turn nearby, or another duel in range, can't start, stop or decide your round.</p>
+      <p>When every badge in range is busy, the screen says <span class="mono">the others are busy</span> until one comes free. After a round the two players usually pair again for a rematch; a waiting badge gets its turn when one of them leaves Duel, about eight seconds after it goes quiet.</p>
+      <p><strong>The strongest signal isn't always the person facing you.</strong> Check the name after <span class="mono">vs</span>. If it's wrong, the badge you're paired with can leave Duel for a moment, or you can, and you'll pair again.</p>
+      <p>Badges on firmware 1.0.23 or older don't see 1.0.24 badges in Duel: the radio messages changed. Badges update themselves, so this sorts itself out.</p>
+      <p><strong>Teams.</strong> A badge is on the team of the last SAO shape plugged into it (circle, triangle, star or umbrella), and each beacon carries it, so the ready screen shows both. It's for the banter: a team changes nothing about who wins. Badges older than 1.0.28 send no team and show as <span class="mono">no team</span>, and duel newer ones as normal.</p>
+      <p>While in Duel the badge doesn't check for updates or talk to Home Assistant: the radio is busy. Leaving Duel gives it back.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head prose">
+      <div class="eyebrow">Honest status</div>
+      <h2>Still being tuned</h2>
+      <p>What hasn't been settled yet, most important first.</p>
+    </div>
+    <ul class="gaps prose">
+      <li class="serious">
+        <h3>Held badges</h3>
+        <p>The game was designed for badges held or worn, but a badge that turns makes its opponent appear to move. Standing the badges on something is the fair way to play until there is a better answer, and the house rule above covers the rest.</p>
+      </li>
+      <li>
+        <h3>Several duels in one place</h3>
+        <p>Badges lock on to one opponent for the round, and this has been tested with three badges: two duelling and one waiting beside them, which stayed out of it. Two duels running side by side need four badges, and haven't been tried yet.</p>
+      </li>
+      <li>
+        <h3>How still is still enough</h3>
+        <p>The 20&nbsp;cm and quarter-second figures come from bench measurement and are shared with Sneak. Duel has been played on two badges facing each other, but not yet by a queue of competitive players.</p>
+      </li>
+      <li>
+        <h3>No score</h3>
+        <p>Each duel stands alone: there are no rounds won, no match and no record. Best of five is kept out loud.</p>
+      </li>
+    </ul>
+  </section>
+
+  <footer>
+    Duel rules as implemented in badge/standoff.h, badge/net.h, badge/badge.ino, badge/ring.h and badge/sound.h, firmware 1.0.44, on the rev F round badge. Timings and thresholds are taken from the code. Design rationale lives in DESIGN.md &sect;6a. A win in Duel also captures the CTF's Duel flag.
+  </footer>
+
+</main>
+
+</html>
